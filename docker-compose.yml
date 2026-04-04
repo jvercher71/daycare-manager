@@ -1,0 +1,40 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - sqlite-data:/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=daycare
+      - POSTGRES_PASSWORD=daycare_password
+      - POSTGRES_DB=daycare_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U daycare"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  sqlite-data:
+  postgres-data:

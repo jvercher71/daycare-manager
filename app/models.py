@@ -1,9 +1,8 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Table, Enum
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 import enum
-
-from database import Base
+from app.database import Base
 
 
 class UserRole(str, enum.Enum):
@@ -33,7 +32,8 @@ class Daycare(Base):
     phone = Column(String, nullable=True)
     email = Column(String, nullable=True)
     logo_url = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     users = relationship("User", back_populates="daycare")
     classes = relationship("ClassRoom", back_populates="daycare")
@@ -50,7 +50,8 @@ class User(Base):
     role = Column(String, default=UserRole.STAFF)
     is_active = Column(Boolean, default=True)
     daycare_id = Column(Integer, ForeignKey("daycares.id"))
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     daycare = relationship("Daycare", back_populates="users")
 
@@ -68,7 +69,10 @@ class Parent(Base):
     emergency_phone = Column(String, nullable=True)
     notes = Column(Text, nullable=True)
     daycare_id = Column(Integer, ForeignKey("daycares.id"))
-    created_at = Column(DateTime, default=datetime.utcnow)
+    is_deleted = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     daycare = relationship("Daycare", back_populates="parents")
     children = relationship("Child", secondary=parent_child, back_populates="parents")
@@ -87,7 +91,10 @@ class Child(Base):
     status = Column(String, default=ChildStatus.ACTIVE)
     class_id = Column(Integer, ForeignKey("classes.id"), nullable=True)
     daycare_id = Column(Integer, ForeignKey("daycares.id"))
-    created_at = Column(DateTime, default=datetime.utcnow)
+    is_deleted = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     parents = relationship("Parent", secondary=parent_child, back_populates="children")
     classroom = relationship("ClassRoom", back_populates="children")
@@ -105,7 +112,10 @@ class ClassRoom(Base):
     max_capacity = Column(Integer, nullable=True)
     teacher_name = Column(String, nullable=True)
     daycare_id = Column(Integer, ForeignKey("daycares.id"))
-    created_at = Column(DateTime, default=datetime.utcnow)
+    is_deleted = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     daycare = relationship("Daycare", back_populates="classes")
     children = relationship("Child", back_populates="classroom")
@@ -122,7 +132,7 @@ class Attendance(Base):
     signed_out_by = Column(String, nullable=True)
     notes = Column(Text, nullable=True)
     date = Column(DateTime, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     child = relationship("Child", back_populates="attendance_records")
 
@@ -141,7 +151,8 @@ class DailyReport(Base):
     diaper_changes = Column(Integer, nullable=True)
     notes = Column(Text, nullable=True)
     staff_name = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     child = relationship("Child", back_populates="daily_reports")
 
@@ -158,6 +169,7 @@ class Incident(Base):
     action_taken = Column(Text, nullable=True)
     parent_notified = Column(Boolean, default=False)
     staff_name = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     child = relationship("Child", back_populates="incidents")

@@ -22,8 +22,9 @@ DMG_PATH="$DIST_DIR/DaycareManagerV2.dmg"
 
 echo "📦 Building Daycare Manager v2 for macOS..."
 
-# Install build deps
-pip install pyinstaller rumps pillow -q
+# Install build deps (rumps skipped — pyobjc-core fails on Python 3.9;
+# the launcher handles missing rumps gracefully at runtime)
+pip install pyinstaller pillow -q
 
 # Clean previous build
 rm -rf "$ROOT/build" "$DIST_DIR"

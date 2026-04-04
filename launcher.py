@@ -126,8 +126,13 @@ def run_tray_mac():
 
         DaycareApp().run()
     except Exception as e:
-        logger.warning(f"Menu bar unavailable ({e}); holding process open")
-        signal.pause()
+        logger.warning(f"Menu bar unavailable ({e}); server running at {URL}")
+        # Keep the process alive so the background server thread stays up
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            logger.info("Shutting down.")
 
 
 # ── Windows / generic control window (tkinter) ────────────────────────────────

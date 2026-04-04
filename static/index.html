@@ -822,7 +822,7 @@
         let todayAttendance = [];
 
         function api(url, opts = {}) {
-            return fetch(url, { ...opts, headers: { ...opts.headers, 'Authorization': 'Bearer ' + token, 'Content-Type': opts.body ? 'application/json' : undefined } });
+            return fetch('/api/v1' + url, { ...opts, headers: { ...opts.headers, 'Authorization': 'Bearer ' + token, 'Content-Type': opts.body ? 'application/json' : undefined } });
         }
 
         function showAuthTab(tab) {
@@ -836,7 +836,7 @@
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             try {
-                const res = await fetch('/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'username=' + encodeURIComponent(email) + '&password=' + encodeURIComponent(password) });
+                const res = await fetch('/api/v1/auth/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'username=' + encodeURIComponent(email) + '&password=' + encodeURIComponent(password) });
                 if (res.ok) {
                     const data = await res.json();
                     token = data.access_token;
@@ -852,7 +852,7 @@
             const password = document.getElementById('regPassword').value;
             const role = document.getElementById('regRole').value;
             try {
-                const res = await fetch('/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, username, password, role }) });
+                const res = await fetch('/api/v1/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, username, password, role }) });
                 if (res.ok) { showMessage('authMessage', 'Account created! Sign in now.', 'success'); showAuthTab('login'); }
                 else { const d = await res.json(); showMessage('authMessage', d.detail || 'Failed', 'error'); }
             } catch (err) { showMessage('authMessage', 'Registration failed', 'error'); }
@@ -875,7 +875,8 @@
                 document.getElementById('userAvatar').textContent = currentUser.username.charAt(0).toUpperCase();
 
                 const daycares = await api('/daycares');
-                const dcList = await daycares.json();
+                const dcData = await daycares.json();
+                const dcList = dcData.items || dcData;
                 if (dcList.length === 0) {
                     document.getElementById('authSection').classList.remove('active');
                     document.getElementById('setupSection').classList.add('active');
@@ -1075,9 +1076,9 @@
         async function loadChildren() {
             try {
                 const [cRes, pRes, clRes] = await Promise.all([api('/children'), api('/parents'), api('/classes')]);
-                allChildren = await cRes.json();
-                allParents = await pRes.json();
-                allClasses = await clRes.json();
+                const cData = await cRes.json(); allChildren = cData.items || cData;
+                const pData = await pRes.json(); allParents = pData.items || pData;
+                const clData = await clRes.json(); allClasses = clData.items || clData;
                 renderChildren(allChildren);
             } catch (err) { console.error('Children load failed'); }
         }
@@ -1175,8 +1176,8 @@
         async function loadParents() {
             try {
                 const [pRes, cRes] = await Promise.all([api('/parents'), api('/children')]);
-                allParents = await pRes.json();
-                allChildren = await cRes.json();
+                const pData = await pRes.json(); allParents = pData.items || pData;
+                const cData = await cRes.json(); allChildren = cData.items || cData;
                 renderParents(allParents);
             } catch (err) { console.error('Parents load failed'); }
         }
@@ -1257,8 +1258,8 @@
         async function loadClasses() {
             try {
                 const [clRes, cRes] = await Promise.all([api('/classes'), api('/children')]);
-                allClasses = await clRes.json();
-                allChildren = await cRes.json();
+                const clData = await clRes.json(); allClasses = clData.items || clData;
+                const cData = await cRes.json(); allChildren = cData.items || cData;
                 renderClasses();
             } catch (err) { console.error('Classes load failed'); }
         }

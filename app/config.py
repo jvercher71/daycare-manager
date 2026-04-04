@@ -6,8 +6,14 @@ from typing import List, Optional
 import secrets
 
 
+def _default_database_url() -> str:
+    if os.environ.get("VERCEL"):
+        return "sqlite:////tmp/daycare.db"
+    return "sqlite:///./daycare.db"
+
+
 class Settings(BaseSettings):
-    DATABASE_URL: str = "sqlite:///./daycare.db"
+    DATABASE_URL: str = _default_database_url()
     SECRET_KEY: str = secrets.token_urlsafe(32)
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440

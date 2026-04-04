@@ -16,6 +16,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger("daycare_manager")
 
+_db_initialized = False
+
+
+def _ensure_db():
+    global _db_initialized
+    if not _db_initialized:
+        init_db()
+        _db_initialized = True
+
+
+_ensure_db()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

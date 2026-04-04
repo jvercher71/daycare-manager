@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daycare Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --primary: #6366f1; --primary-hover: #4f46e5; --primary-light: rgba(99,102,241,0.1);
+            --success: #10b981; --success-light: rgba(16,185,129,0.1);
+            --warning: #f59e0b; --warning-light: rgba(245,158,11,0.1);
+            --danger: #ef4444; --danger-light: rgba(239,68,68,0.1);
+            --info: #3b82f6; --info-light: rgba(59,130,246,0.1);
+            --gray-50: #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1; --gray-400: #94a3b8; --gray-500: #64748b;
+            --gray-600: #475569; --gray-700: #334155; --gray-800: #1e293b; --gray-900: #0f172a;
+            --radius: 12px; --radius-lg: 16px; --radius-xl: 20px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1); --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+            --transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--gray-50); min-height: 100vh; color: var(--gray-800); line-height: 1.6; }
+        .auth-section, .app-section, .setup-section { display: none; }
+        .auth-section.active, .app-section.active, .setup-section.active { display: block; }
+
+        /* Auth */
+        .auth-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; position: relative; overflow: hidden; }
+        .auth-wrapper::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%); animation: pulse-bg 8s ease-in-out infinite; }
+        @keyframes pulse-bg { 0%,100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.1); opacity: 0.8; } }
+        .auth-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-radius: var(--radius-xl); padding: 48px 40px; width: 100%; max-width: 420px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); position: relative; z-index: 1; animation: slide-up 0.6s ease-out; }
+        @keyframes slide-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .auth-logo { text-align: center; margin-bottom: 32px; }
+        .auth-logo h1 { font-size: 28px; font-weight: 800; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .auth-logo p { color: var(--gray-500); font-size: 14px; margin-top: 4px; }
+        .auth-tabs { display: flex; background: var(--gray-100); border-radius: 10px; padding: 4px; margin-bottom: 28px; }
+        .auth-tab { flex: 1; padding: 10px; border: none; background: transparent; cursor: pointer; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--gray-500); transition: var(--transition); font-family: inherit; }
+        .auth-tab.active { background: white; color: var(--gray-800); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--gray-700); font-size: 13px; letter-spacing: 0.025em; }
+        .form-input { width: 100%; padding: 12px 14px; border: 1.5px solid var(--gray-200); border-radius: var(--radius); font-size: 14px; font-family: inherit; transition: var(--transition); background: white; color: var(--gray-800); }
+        .form-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+        .form-input::placeholder { color: var(--gray-400); }
+        textarea.form-input { resize: vertical; min-height: 80px; }
+        select.form-input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+        .btn { padding: 12px 20px; border: none; border-radius: var(--radius); cursor: pointer; font-size: 14px; font-weight: 600; font-family: inherit; transition: var(--transition); display: inline-flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 0.025em; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 4px 14px rgba(102,126,234,0.4); }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(102,126,234,0.5); }
+        .btn-secondary { background: var(--gray-100); color: var(--gray-700); }
+        .btn-secondary:hover { background: var(--gray-200); }
+        .btn-ghost { background: transparent; color: var(--gray-600); }
+        .btn-ghost:hover { background: var(--gray-100); }
+        .btn-danger { background: var(--danger-light); color: var(--danger); }
+        .btn-danger:hover { background: rgba(239,68,68,0.2); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #059669; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-warning:hover { background: #d97706; }
+        .btn-small { padding: 6px 12px; font-size: 12px; }
+        .btn-full { width: 100%; }
+        .btn-icon { width: 32px; height: 32px; padding: 0; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-icon svg { width: 16px; height: 16px; }
+
+        /* Setup */
+        .setup-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; }
+        .setup-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-radius: var(--radius-xl); padding: 48px 40px; width: 100%; max-width: 500px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); animation: slide-up 0.6s ease-out; }
+        .setup-card h1 { font-size: 24px; font-weight: 800; color: var(--gray-800); margin-bottom: 8px; }
+        .setup-card p { color: var(--gray-500); font-size: 14px; margin-bottom: 28px; }
+
+        /* App Layout */
+        .app-layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: white; border-right: 1px solid var(--gray-200); padding: 20px 0; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
+        .sidebar-header { padding: 0 20px 20px; border-bottom: 1px solid var(--gray-100); }
+        .sidebar-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+        .sidebar-logo img { width: 40px; height: 40px; border-radius: 10px; object-fit: cover; }
+        .sidebar-logo .logo-placeholder { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 18px; }
+        .sidebar-logo h2 { font-size: 16px; font-weight: 700; color: var(--gray-800); }
+        .sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 20px; color: var(--gray-600); cursor: pointer; transition: var(--transition); font-size: 14px; font-weight: 500; border: none; background: none; width: 100%; text-align: left; font-family: inherit; }
+        .nav-item:hover { background: var(--gray-50); color: var(--gray-800); }
+        .nav-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+        .nav-item svg { width: 20px; height: 20px; flex-shrink: 0; }
+        .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--gray-100); }
+        .sidebar-user { display: flex; align-items: center; gap: 10px; }
+        .sidebar-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px; }
+        .sidebar-user-info { flex: 1; }
+        .sidebar-user-name { font-size: 13px; font-weight: 600; color: var(--gray-800); }
+        .sidebar-user-role { font-size: 11px; color: var(--gray-500); text-transform: capitalize; }
+
+        .main-content { flex: 1; margin-left: 260px; padding: 32px; }
+
+        /* Page Header */
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+        .page-header h1 { font-size: 26px; font-weight: 800; color: var(--gray-800); letter-spacing: -0.5px; }
+        .page-header p { color: var(--gray-500); font-size: 14px; margin-top: 2px; }
+
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+        .stat-card { background: white; border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow); border: 1px solid var(--gray-100); }
+        .stat-label { font-size: 12px; font-weight: 500; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+        .stat-value { font-size: 28px; font-weight: 800; color: var(--gray-800); line-height: 1.2; }
+        .stat-value.primary { color: var(--primary); }
+        .stat-value.success { color: var(--success); }
+        .stat-value.warning { color: var(--warning); }
+        .stat-value.danger { color: var(--danger); }
+        .stat-value.info { color: var(--info); }
+
+        /* Cards & Tables */
+        .card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); border: 1px solid var(--gray-100); overflow: hidden; }
+        .card-header { padding: 20px 24px; border-bottom: 1px solid var(--gray-100); display: flex; justify-content: space-between; align-items: center; }
+        .card-header h2 { font-size: 16px; font-weight: 700; color: var(--gray-800); }
+        .card-body { padding: 24px; }
+
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th { text-align: left; padding: 12px 16px; font-size: 12px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-100); background: var(--gray-50); }
+        .data-table td { padding: 14px 16px; font-size: 14px; border-bottom: 1px solid var(--gray-100); }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:hover td { background: var(--gray-50); }
+
+        /* Badges */
+        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.025em; }
+        .badge-primary { background: var(--primary-light); color: var(--primary); }
+        .badge-success { background: var(--success-light); color: var(--success); }
+        .badge-warning { background: var(--warning-light); color: var(--warning); }
+        .badge-danger { background: var(--danger-light); color: var(--danger); }
+        .badge-info { background: var(--info-light); color: var(--info); }
+        .badge-gray { background: var(--gray-100); color: var(--gray-500); }
+
+        /* Attendance */
+        .attendance-grid { display: grid; gap: 12px; }
+        .attendance-card { background: white; border-radius: var(--radius-lg); padding: 16px 20px; box-shadow: var(--shadow); border: 1px solid var(--gray-100); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .attendance-child { display: flex; align-items: center; gap: 12px; }
+        .attendance-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: white; }
+        .attendance-name { font-weight: 600; font-size: 14px; color: var(--gray-800); }
+        .attendance-time { font-size: 12px; color: var(--gray-500); }
+        .attendance-status { display: flex; align-items: center; gap: 8px; }
+
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: white; border-radius: var(--radius-xl); width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); animation: modal-slide 0.3s ease-out; }
+        @keyframes modal-slide { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 24px 28px 0; }
+        .modal-header h2 { font-size: 20px; font-weight: 700; color: var(--gray-800); }
+        .modal-close { width: 32px; height: 32px; border: none; background: var(--gray-100); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--gray-500); font-size: 18px; transition: var(--transition); }
+        .modal-close:hover { background: var(--gray-200); color: var(--gray-700); }
+        .modal-body { padding: 24px 28px; }
+        .modal-footer { padding: 0 28px 24px; display: flex; gap: 10px; justify-content: flex-end; }
+
+        /* Message */
+        .message { padding: 12px 16px; border-radius: var(--radius); margin-bottom: 16px; font-size: 13px; font-weight: 500; animation: fade-in 0.3s ease-out; }
+        .message.error { background: var(--danger-light); color: var(--danger); }
+        .message.success { background: var(--success-light); color: var(--success); }
+        @keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Empty State */
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--gray-400); }
+        .empty-state svg { width: 64px; height: 64px; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state h3 { font-size: 18px; font-weight: 600; color: var(--gray-500); margin-bottom: 4px; }
+        .empty-state p { font-size: 14px; }
+
+        /* Search */
+        .search-bar { position: relative; margin-bottom: 20px; }
+        .search-bar input { width: 100%; padding: 12px 14px 12px 42px; border: 1.5px solid var(--gray-200); border-radius: var(--radius); font-size: 14px; font-family: inherit; transition: var(--transition); }
+        .search-bar input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+        .search-bar svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--gray-400); }
+
+        /* Toolbar */
+        .toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .toolbar-spacer { flex: 1; }
+
+        /* Checkbox */
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 8px; }
+        .checkbox-item { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--gray-50); border-radius: 8px; cursor: pointer; font-size: 13px; }
+        .checkbox-item input { accent-color: var(--primary); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; padding: 20px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+            .data-table { display: block; overflow-x: auto; }
+            .mobile-menu-btn { display: flex !important; }
+        }
+        .mobile-menu-btn { display: none; position: fixed; top: 16px; left: 16px; z-index: 200; width: 40px; height: 40px; border-radius: 10px; background: white; box-shadow: var(--shadow-md); border: none; cursor: pointer; align-items: center; justify-content: center; }
+        .overlay-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 99; }
+        .overlay-bg.active { display: block; }
+
+        /* Checkbox custom */
+        .todo-checkbox { width: 22px; height: 22px; border: 2px solid var(--gray-300); border-radius: 6px; cursor: pointer; appearance: none; -webkit-appearance: none; transition: var(--transition); flex-shrink: 0; position: relative; }
+        .todo-checkbox:checked { background: var(--success); border-color: var(--success); }
+        .todo-checkbox:checked::after { content: ''; position: absolute; left: 6px; top: 2px; width: 5px; height: 10px; border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+
+        /* Present indicator */
+        .present-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .present-dot.in { background: var(--success); }
+        .present-dot.out { background: var(--gray-300); }
+
+        /* Quick sign in */
+        .quick-signin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+        .quick-signin-card { background: white; border-radius: var(--radius); padding: 16px; text-align: center; box-shadow: var(--shadow); border: 2px solid var(--gray-100); cursor: pointer; transition: var(--transition); }
+        .quick-signin-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .quick-signin-card.signed-in { border-color: var(--success); background: var(--success-light); }
+        .quick-signin-avatar { width: 48px; height: 48px; border-radius: 50%; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; color: white; }
+        .quick-signin-name { font-size: 13px; font-weight: 600; color: var(--gray-800); }
+        .quick-signin-class { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+    </style>
+</head>
+<body>
+    <button class="mobile-menu-btn" onclick="toggleSidebar()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="overlay-bg" id="overlayBg" onclick="toggleSidebar()"></div>
+
+    <!-- Auth -->
+    <div class="auth-section active" id="authSection">
+        <div class="auth-wrapper">
+            <div class="auth-card">
+                <div class="auth-logo">
+                    <h1>Daycare Manager</h1>
+                    <p>Manage your daycare with ease</p>
+                </div>
+                <div id="authMessage"></div>
+                <div class="auth-tabs">
+                    <button class="auth-tab active" onclick="showAuthTab('login')">Sign In</button>
+                    <button class="auth-tab" onclick="showAuthTab('register')">Sign Up</button>
+                </div>
+                <div id="loginForm">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="loginEmail" class="form-input" placeholder="you@daycare.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="loginPassword" class="form-input" placeholder="Enter password" required>
+                    </div>
+                    <button class="btn btn-primary btn-full" onclick="login()">Sign In</button>
+                </div>
+                <div id="registerForm" style="display:none;">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="regUsername" class="form-input" placeholder="Jane Smith" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="regEmail" class="form-input" placeholder="you@daycare.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="regPassword" class="form-input" placeholder="Min 6 characters" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select id="regRole" class="form-input">
+                            <option value="staff">Staff</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary btn-full" onclick="register()">Create Account</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daycare Setup -->
+    <div class="setup-section" id="setupSection">
+        <div class="setup-wrapper">
+            <div class="setup-card">
+                <h1>Welcome!</h1>
+                <p>Set up your daycare center to get started.</p>
+                <div id="setupMessage"></div>
+                <div class="form-group">
+                    <label>Daycare Name</label>
+                    <input type="text" id="setupName" class="form-input" placeholder="Little Stars Daycare" required>
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <input type="text" id="setupAddress" class="form-input" placeholder="123 Main St, City, State">
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="text" id="setupPhone" class="form-input" placeholder="(555) 123-4567">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="setupEmail" class="form-input" placeholder="info@daycare.com">
+                </div>
+                <div class="form-group">
+                    <label>Logo URL (optional)</label>
+                    <input type="text" id="setupLogo" class="form-input" placeholder="https://example.com/logo.png">
+                </div>
+                <button class="btn btn-primary btn-full" onclick="setupDaycare()">Get Started</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- App -->
+    <div class="app-section" id="appSection">
+        <div class="app-layout">
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <div class="logo-placeholder" id="sidebarLogo"></div>
+                        <h2 id="sidebarDaycareName">Daycare</h2>
+                    </div>
+                </div>
+                <nav class="sidebar-nav">
+                    <button class="nav-item active" onclick="showPage('dashboard')" data-page="dashboard">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                        Dashboard
+                    </button>
+                    <button class="nav-item" onclick="showPage('attendance')" data-page="attendance">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                        Attendance
+                    </button>
+                    <button class="nav-item" onclick="showPage('children')" data-page="children">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                        Children
+                    </button>
+                    <button class="nav-item" onclick="showPage('parents')" data-page="parents">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        Parents
+                    </button>
+                    <button class="nav-item" onclick="showPage('classes')" data-page="classes">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+                        Classes
+                    </button>
+                    <button class="nav-item" onclick="showPage('reports')" data-page="reports">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        Daily Reports
+                    </button>
+                    <button class="nav-item" onclick="showPage('incidents')" data-page="incidents">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        Incidents
+                    </button>
+                    <button class="nav-item" onclick="showPage('settings')" data-page="settings">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                        Settings
+                    </button>
+                </nav>
+                <div class="sidebar-footer">
+                    <div class="sidebar-user">
+                        <div class="sidebar-avatar" id="userAvatar"></div>
+                        <div class="sidebar-user-info">
+                            <div class="sidebar-user-name" id="userName"></div>
+                            <div class="sidebar-user-role" id="userRole"></div>
+                        </div>
+                        <button class="btn btn-ghost btn-icon" onclick="logout()" title="Sign Out">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="main-content">
+                <!-- Dashboard -->
+                <div id="page-dashboard" class="page">
+                    <div class="page-header">
+                        <div>
+                            <h1>Dashboard</h1>
+                            <p>Overview of your daycare today</p>
+                        </div>
+                    </div>
+                    <div class="stats-grid" id="dashboardStats"></div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Currently Signed In</h2>
+                        </div>
+                        <div class="card-body" id="dashboardPresent"></div>
+                    </div>
+                </div>
+
+                <!-- Attendance -->
+                <div id="page-attendance" class="page" style="display:none;">
+                    <div class="page-header">
+                        <div>
+                            <h1>Attendance</h1>
+                            <p>Sign children in and out</p>
+                        </div>
+                    </div>
+                    <div class="toolbar">
+                        <select id="attendanceClassFilter" class="form-input" onchange="loadAttendance()" style="max-width:200px;">
+                            <option value="">All Classes</option>
+                        </select>
+                        <div class="toolbar-spacer"></div>
+                        <button class="btn btn-primary" onclick="showQuickSignIn()">Quick Sign In / Out</button>
+                    </div>
+                    <div class="attendance-grid" id="attendanceList"></div>
+                </div>
+
+                <!-- Children -->
+                <div id="page-children" class="page" style="display:none;">
+                    <div class="page-header">
+                        <div>
+                            <h1>Children</h1>
+                            <p>Manage enrolled children</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="showChildModal()">+ Add Child</button>
+                    </div>
+                    <div class="search-bar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" id="childSearch" placeholder="Search children..." oninput="filterChildren()">
+                    </div>
+                    <div class="card">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Class</th>
+                                    <th>Parents</th>
+                                    <th>Allergies</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="childrenTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Parents -->
+                <div id="page-parents" class="page" style="display:none;">
+                    <div class="page-header">
+                        <div>
+                            <h1>Parents</h1>
+                            <p>Parent and guardian contacts</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="showParentModal()">+ Add Parent</button>
+                    </div>
+                    <div class="search-bar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" id="parentSearch" placeholder="Search parents..." oninput="filterParents()">
+                    </div>
+                    <div class="card">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>Children</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="parentsTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Classes -->
+                <div id="page-classes" class="page" style="display:none;">
+                    <div class="page-header">
+                        <div>
+                            <h1>Classes</h1>
+                            <p>Classrooms and groups</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="showClassModal()">+ Add Class</button>
+                    </div>
+                    <div class="card">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Class Name</th>
+                                    <th>Age Range</th>
+                                    <th>Teacher</th>
+                                    <th>Capacity</th>
+                                    <th>Enrolled</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="classesTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Daily Reports -->
+                <div id="page-reports" class="page" style="display:none;">
+                    <div class="page-header">
+                        <div>
+                            <h1>Daily Reports</h1>
+                            <p>Track meals, naps, activities, and mood</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="showReportModal()">+ New Report</button>
+                    </div>
+                    <div class="toolbar">
+                        <select id="reportChildFilter" class="form-input" onchange="loadReports()" style="max-width:200px;">
+                            <option value="">All Children</option>
+                        </select>
+                    </div>
+                    <div id="reportsList"></div>
+                </div>
+
+                <!-- Incidents -->
+                <div id="page-incidents" class="page" style="display:none;">
+                    <div class="page-header">
+                        <div>
+                            <h1>Incidents</h1>
+                            <p>Log and track incidents</p>
+                        </div>
+                        <button class="btn btn-danger" onclick="showIncidentModal()">+ Log Incident</button>
+                    </div>
+                    <div id="incidentsList"></div>
+                </div>
+
+                <!-- Settings -->
+                <div id="page-settings" class="page" style="display:none;">
+                    <div class="page-header">
+                        <div>
+                            <h1>Settings</h1>
+                            <p>Manage your daycare profile</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="settingsMessage"></div>
+                            <div class="form-group">
+                                <label>Daycare Name</label>
+                                <input type="text" id="settingsName" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Address</label>
+                                <input type="text" id="settingsAddress" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Phone</label>
+                                <input type="text" id="settingsPhone" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="settingsEmail" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Logo URL</label>
+                                <input type="text" id="settingsLogo" class="form-input" placeholder="https://example.com/logo.png">
+                            </div>
+                            <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="childModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="childModalTitle">Add Child</h2>
+                <button class="modal-close" onclick="closeModal('childModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="childModalMessage"></div>
+                <input type="hidden" id="childId">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="form-group">
+                        <label>First Name</label>
+                        <input type="text" id="childFirstName" class="form-input" placeholder="First name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" id="childLastName" class="form-input" placeholder="Last name" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Date of Birth</label>
+                    <input type="date" id="childDob" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Class</label>
+                    <select id="childClass" class="form-input"><option value="">No Class</option></select>
+                </div>
+                <div class="form-group">
+                    <label>Parents/Guardians</label>
+                    <div id="childParents" class="checkbox-group"></div>
+                </div>
+                <div class="form-group">
+                    <label>Allergies</label>
+                    <textarea id="childAllergies" class="form-input" rows="2" placeholder="List any allergies..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Medical Notes</label>
+                    <textarea id="childMedical" class="form-input" rows="2" placeholder="Any medical information..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Photo URL</label>
+                    <input type="text" id="childPhoto" class="form-input" placeholder="https://example.com/photo.jpg">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('childModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveChild()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="parentModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="parentModalTitle">Add Parent</h2>
+                <button class="modal-close" onclick="closeModal('parentModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="parentModalMessage"></div>
+                <input type="hidden" id="parentId">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="form-group">
+                        <label>First Name</label>
+                        <input type="text" id="parentFirstName" class="form-input" placeholder="First name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" id="parentLastName" class="form-input" placeholder="Last name" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="text" id="parentPhone" class="form-input" placeholder="(555) 123-4567" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="parentEmail" class="form-input" placeholder="parent@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <input type="text" id="parentAddress" class="form-input" placeholder="Home address">
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="form-group">
+                        <label>Emergency Contact</label>
+                        <input type="text" id="parentEmergency" class="form-input" placeholder="Contact name">
+                    </div>
+                    <div class="form-group">
+                        <label>Emergency Phone</label>
+                        <input type="text" id="parentEmergencyPhone" class="form-input" placeholder="(555) 000-0000">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="parentNotes" class="form-input" rows="2" placeholder="Additional notes..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('parentModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveParent()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="classModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="classModalTitle">Add Class</h2>
+                <button class="modal-close" onclick="closeModal('classModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="classModalMessage"></div>
+                <input type="hidden" id="classId">
+                <div class="form-group">
+                    <label>Class Name</label>
+                    <input type="text" id="className" class="form-input" placeholder="e.g. Sunflowers" required>
+                </div>
+                <div class="form-group">
+                    <label>Age Range</label>
+                    <input type="text" id="classAge" class="form-input" placeholder="e.g. 2-3 years">
+                </div>
+                <div class="form-group">
+                    <label>Max Capacity</label>
+                    <input type="number" id="classCapacity" class="form-input" placeholder="e.g. 15">
+                </div>
+                <div class="form-group">
+                    <label>Teacher Name</label>
+                    <input type="text" id="classTeacher" class="form-input" placeholder="Lead teacher">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('classModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveClass()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="reportModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>New Daily Report</h2>
+                <button class="modal-close" onclick="closeModal('reportModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="reportModalMessage"></div>
+                <div class="form-group">
+                    <label>Child</label>
+                    <select id="reportChild" class="form-input" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Meals</label>
+                    <textarea id="reportMeals" class="form-input" rows="2" placeholder="Breakfast: oatmeal, Lunch: chicken & rice..."></textarea>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="form-group">
+                        <label>Nap Start</label>
+                        <input type="time" id="reportNapStart" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Nap End</label>
+                        <input type="time" id="reportNapEnd" class="form-input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Activities</label>
+                    <textarea id="reportActivities" class="form-input" rows="2" placeholder="Arts & crafts, outdoor play..."></textarea>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="form-group">
+                        <label>Mood</label>
+                        <select id="reportMood" class="form-input">
+                            <option value="">Select</option>
+                            <option value="happy">Happy</option>
+                            <option value="calm">Calm</option>
+                            <option value="fussy">Fussy</option>
+                            <option value="tired">Tired</option>
+                            <option value="excited">Excited</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Diaper Changes</label>
+                        <input type="number" id="reportDiapers" class="form-input" min="0" placeholder="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="reportNotes" class="form-input" rows="2" placeholder="Additional notes for parents..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('reportModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveReport()">Save Report</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="incidentModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Log Incident</h2>
+                <button class="modal-close" onclick="closeModal('incidentModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="incidentModalMessage"></div>
+                <div class="form-group">
+                    <label>Child</label>
+                    <select id="incidentChild" class="form-input" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Incident Type</label>
+                    <select id="incidentType" class="form-input" required>
+                        <option value="">Select type</option>
+                        <option value="minor_injury">Minor Injury</option>
+                        <option value="illness">Illness</option>
+                        <option value="behavioral">Behavioral</option>
+                        <option value="allergic_reaction">Allergic Reaction</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Severity</label>
+                    <select id="incidentSeverity" class="form-input">
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="incidentDesc" class="form-input" rows="3" placeholder="Describe what happened..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Action Taken</label>
+                    <textarea id="incidentAction" class="form-input" rows="2" placeholder="What was done..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-item" style="display:flex;align-items:center;gap:8px;padding:0;">
+                        <input type="checkbox" id="incidentNotified">
+                        <span>Parent/Guardian Notified</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('incidentModal')">Cancel</button>
+                <button class="btn btn-danger" onclick="saveIncident()">Log Incident</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="quickSignInModal">
+        <div class="modal" style="max-width:700px;">
+            <div class="modal-header">
+                <h2>Quick Sign In / Out</h2>
+                <button class="modal-close" onclick="closeModal('quickSignInModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="search-bar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" id="quickSearch" placeholder="Search children..." oninput="filterQuickSignin()">
+                </div>
+                <div class="quick-signin-grid" id="quickSignInGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('token');
+        let currentUser = null;
+        let daycare = null;
+        let allChildren = [];
+        let allParents = [];
+        let allClasses = [];
+        let todayAttendance = [];
+
+        function api(url, opts = {}) {
+            return fetch(url, { ...opts, headers: { ...opts.headers, 'Authorization': 'Bearer ' + token, 'Content-Type': opts.body ? 'application/json' : undefined } });
+        }
+
+        function showAuthTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+            document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+        }
+
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            try {
+                const res = await fetch('/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'username=' + encodeURIComponent(email) + '&password=' + encodeURIComponent(password) });
+                if (res.ok) {
+                    const data = await res.json();
+                    token = data.access_token;
+                    localStorage.setItem('token', token);
+                    initApp();
+                } else { showMessage('authMessage', 'Invalid email or password', 'error'); }
+            } catch (err) { showMessage('authMessage', 'Login failed', 'error'); }
+        }
+
+        async function register() {
+            const username = document.getElementById('regUsername').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const role = document.getElementById('regRole').value;
+            try {
+                const res = await fetch('/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, username, password, role }) });
+                if (res.ok) { showMessage('authMessage', 'Account created! Sign in now.', 'success'); showAuthTab('login'); }
+                else { const d = await res.json(); showMessage('authMessage', d.detail || 'Failed', 'error'); }
+            } catch (err) { showMessage('authMessage', 'Registration failed', 'error'); }
+        }
+
+        function logout() {
+            token = null; localStorage.removeItem('token');
+            document.getElementById('authSection').classList.add('active');
+            document.getElementById('appSection').classList.remove('active');
+            document.getElementById('setupSection').classList.remove('active');
+        }
+
+        async function initApp() {
+            try {
+                const res = await api('/me');
+                if (!res.ok) { logout(); return; }
+                currentUser = await res.json();
+                document.getElementById('userName').textContent = currentUser.username;
+                document.getElementById('userRole').textContent = currentUser.role;
+                document.getElementById('userAvatar').textContent = currentUser.username.charAt(0).toUpperCase();
+
+                const daycares = await api('/daycares');
+                const dcList = await daycares.json();
+                if (dcList.length === 0) {
+                    document.getElementById('authSection').classList.remove('active');
+                    document.getElementById('setupSection').classList.add('active');
+                } else {
+                    daycare = dcList[0];
+                    showApp();
+                }
+            } catch (err) { logout(); }
+        }
+
+        async function setupDaycare() {
+            const name = document.getElementById('setupName').value;
+            if (!name) return;
+            try {
+                const res = await api('/daycares', { method: 'POST', body: JSON.stringify({ name, address: document.getElementById('setupAddress').value, phone: document.getElementById('setupPhone').value, email: document.getElementById('setupEmail').value, logo_url: document.getElementById('setupLogo').value }) });
+                if (res.ok) {
+                    daycare = await res.json();
+                    document.getElementById('setupSection').classList.remove('active');
+                    showApp();
+                }
+            } catch (err) { showMessage('setupMessage', 'Failed to create daycare', 'error'); }
+        }
+
+        function showApp() {
+            document.getElementById('authSection').classList.remove('active');
+            document.getElementById('setupSection').classList.remove('active');
+            document.getElementById('appSection').classList.add('active');
+            updateSidebar();
+            loadDashboard();
+        }
+
+        function updateSidebar() {
+            const logo = document.getElementById('sidebarLogo');
+            const nameEl = document.getElementById('sidebarDaycareName');
+            if (daycare.logo_url) {
+                logo.innerHTML = '<img src="' + daycare.logo_url + '" alt="Logo" style="width:40px;height:40px;border-radius:10px;object-fit:cover;">';
+            } else {
+                logo.textContent = daycare.name.charAt(0).toUpperCase();
+            }
+            nameEl.textContent = daycare.name;
+        }
+
+        function showPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('page-' + page).style.display = 'block';
+            document.querySelector('[data-page="' + page + '"]').classList.add('active');
+            if (page === 'dashboard') loadDashboard();
+            else if (page === 'attendance') loadAttendance();
+            else if (page === 'children') loadChildren();
+            else if (page === 'parents') loadParents();
+            else if (page === 'classes') loadClasses();
+            else if (page === 'reports') loadReports();
+            else if (page === 'incidents') loadIncidents();
+            else if (page === 'settings') loadSettings();
+            if (window.innerWidth < 768) toggleSidebar();
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlayBg').classList.toggle('active');
+        }
+
+        // Dashboard
+        async function loadDashboard() {
+            try {
+                const stats = await api('/dashboard/stats');
+                const s = await stats.json();
+                document.getElementById('dashboardStats').innerHTML =
+                    '<div class="stat-card"><div class="stat-label">Total Children</div><div class="stat-value primary">' + s.total_children + '</div></div>' +
+                    '<div class="stat-card"><div class="stat-label">Currently Present</div><div class="stat-value success">' + s.currently_present + '</div></div>' +
+                    '<div class="stat-card"><div class="stat-label">Today Check-ins</div><div class="stat-value info">' + s.today_attendance + '</div></div>' +
+                    '<div class="stat-card"><div class="stat-label">Parents</div><div class="stat-value">' + s.total_parents + '</div></div>' +
+                    '<div class="stat-card"><div class="stat-label">Classes</div><div class="stat-value">' + s.total_classes + '</div></div>' +
+                    '<div class="stat-card"><div class="stat-label">Incidents Today</div><div class="stat-value ' + (s.today_incidents > 0 ? 'danger' : '') + '">' + s.today_incidents + '</div></div>';
+
+                const attRes = await api('/attendance/today');
+                const att = await attRes.json();
+                const present = att.filter(a => !a.sign_out_time);
+                if (present.length === 0) {
+                    document.getElementById('dashboardPresent').innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><h3>No one signed in yet</h3><p>Children will appear here when signed in</p></div>';
+                } else {
+                    const colors = ['#6366f1','#10b981','#f59e0b','#ef4444','#3b82f6','#8b5cf6','#ec4899','#14b8a6'];
+                    document.getElementById('dashboardPresent').innerHTML = present.map((a, i) => {
+                        const child = allChildren.find(c => c.id === a.child_id);
+                        const name = child ? child.first_name + ' ' + child.last_name : 'Unknown';
+                        const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
+                        const color = colors[i % colors.length];
+                        const time = new Date(a.sign_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--gray-100);">' +
+                            '<div style="width:36px;height:36px;border-radius:50%;background:' + color + ';display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:12px;flex-shrink:0;">' + initials + '</div>' +
+                            '<div style="flex:1;"><div style="font-weight:600;font-size:14px;">' + escapeHtml(name) + '</div><div style="font-size:12px;color:var(--gray-500);">Signed in at ' + time + '</div></div>' +
+                            '<span class="badge badge-success">Present</span></div>';
+                    }).join('');
+                }
+            } catch (err) { console.error('Dashboard load failed'); }
+        }
+
+        // Attendance
+        async function loadAttendance() {
+            try {
+                const classFilter = document.getElementById('attendanceClassFilter').value;
+                let children = allChildren;
+                if (classFilter) children = children.filter(c => c.class_id == classFilter);
+
+                const attRes = await api('/attendance/today');
+                todayAttendance = await attRes.json();
+                const present = todayAttendance.filter(a => !a.sign_out_time);
+                const signedOut = todayAttendance.filter(a => a.sign_out_time);
+
+                let html = '';
+                if (present.length > 0) {
+                    html += '<h3 style="font-size:14px;font-weight:600;color:var(--gray-500);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.05em;">Currently Present (' + present.length + ')</h3>';
+                    html += present.map(a => renderAttendanceCard(a, true)).join('');
+                }
+                if (signedOut.length > 0) {
+                    html += '<h3 style="font-size:14px;font-weight:600;color:var(--gray-500);margin:20px 0 12px;text-transform:uppercase;letter-spacing:0.05em;">Signed Out (' + signedOut.length + ')</h3>';
+                    html += signedOut.map(a => renderAttendanceCard(a, false)).join('');
+                }
+                if (!html) html = '<div class="empty-state"><h3>No attendance today</h3><p>Sign children in using Quick Sign In</p></div>';
+                document.getElementById('attendanceList').innerHTML = html;
+
+                // Populate class filter
+                const sel = document.getElementById('attendanceClassFilter');
+                sel.innerHTML = '<option value="">All Classes</option>' + allClasses.map(c => '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>').join('');
+            } catch (err) { console.error('Attendance load failed'); }
+        }
+
+        function renderAttendanceCard(a, isPresent) {
+            const child = allChildren.find(c => c.id === a.child_id);
+            const name = child ? child.first_name + ' ' + child.last_name : 'Unknown';
+            const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
+            const colors = ['#6366f1','#10b981','#f59e0b','#ef4444','#3b82f6','#8b5cf6'];
+            const color = colors[a.child_id % colors.length];
+            const signIn = new Date(a.sign_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const signOut = a.sign_out_time ? new Date(a.sign_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+            return '<div class="attendance-card">' +
+                '<div class="attendance-child">' +
+                '<div class="attendance-avatar" style="background:' + color + '">' + initials + '</div>' +
+                '<div><div class="attendance-name">' + escapeHtml(name) + '</div>' +
+                '<div class="attendance-time">In: ' + signIn + (signOut ? ' | Out: ' + signOut : '') + '</div></div></div>' +
+                '<div class="attendance-status">' +
+                (isPresent ? '<span class="badge badge-success">Present</span><button class="btn btn-warning btn-small" onclick="signOutChild(' + a.id + ')">Sign Out</button>' : '<span class="badge badge-gray">Signed Out</span>') +
+                '</div></div>';
+        }
+
+        function showQuickSignIn() {
+            const colors = ['#6366f1','#10b981','#f59e0b','#ef4444','#3b82f6','#8b5cf6','#ec4899','#14b8a6'];
+            const grid = document.getElementById('quickSignInGrid');
+            grid.innerHTML = allChildren.filter(c => c.status === 'active').map((c, i) => {
+                const name = c.first_name + ' ' + c.last_name;
+                const initials = (c.first_name[0] + c.last_name[0]).toUpperCase();
+                const color = colors[i % colors.length];
+                const isSignedIn = todayAttendance.some(a => a.child_id === c.id && !a.sign_out_time);
+                const cls = allClasses.find(cl => cl.id === c.class_id);
+                return '<div class="quick-signin-card ' + (isSignedIn ? 'signed-in' : '') + '" onclick="toggleQuickSignIn(' + c.id + ', ' + isSignedIn + ')">' +
+                    '<div class="quick-signin-avatar" style="background:' + color + '">' + initials + '</div>' +
+                    '<div class="quick-signin-name">' + escapeHtml(name) + '</div>' +
+                    '<div class="quick-signin-class">' + (cls ? escapeHtml(cls.name) : 'No class') + '</div>' +
+                    '<div style="margin-top:8px;"><span class="badge ' + (isSignedIn ? 'badge-success' : 'badge-gray') + '">' + (isSignedIn ? 'Signed In' : 'Sign In') + '</span></div>' +
+                    '</div>';
+            }).join('');
+            openModal('quickSignInModal');
+        }
+
+        function filterQuickSignin() {
+            const q = document.getElementById('quickSearch').value.toLowerCase();
+            document.querySelectorAll('.quick-signin-card').forEach(card => {
+                const name = card.querySelector('.quick-signin-name').textContent.toLowerCase();
+                card.style.display = name.includes(q) ? '' : 'none';
+            });
+        }
+
+        async function toggleQuickSignIn(childId, isSignedIn) {
+            try {
+                if (isSignedIn) {
+                    const att = todayAttendance.find(a => a.child_id === childId && !a.sign_out_time);
+                    if (att) await api('/attendance/signout/' + att.id + '?signed_out_by=' + encodeURIComponent(currentUser.username), { method: 'POST' });
+                } else {
+                    await api('/attendance/signin', { method: 'POST', body: JSON.stringify({ child_id: childId, signed_in_by: currentUser.username }) });
+                }
+                loadAttendance();
+                showQuickSignIn();
+                loadDashboard();
+            } catch (err) { alert('Failed to update attendance'); }
+        }
+
+        async function signOutChild(attendanceId) {
+            try {
+                await api('/attendance/signout/' + attendanceId + '?signed_out_by=' + encodeURIComponent(currentUser.username), { method: 'POST' });
+                loadAttendance();
+                loadDashboard();
+            } catch (err) { alert('Failed to sign out'); }
+        }
+
+        // Children
+        async function loadChildren() {
+            try {
+                const [cRes, pRes, clRes] = await Promise.all([api('/children'), api('/parents'), api('/classes')]);
+                allChildren = await cRes.json();
+                allParents = await pRes.json();
+                allClasses = await clRes.json();
+                renderChildren(allChildren);
+            } catch (err) { console.error('Children load failed'); }
+        }
+
+        function renderChildren(children) {
+            const tbody = document.getElementById('childrenTable');
+            if (children.length === 0) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><h3>No children enrolled</h3><p>Add your first child to get started</p></div></td></tr>'; return; }
+            tbody.innerHTML = children.map(c => {
+                const cls = allClasses.find(cl => cl.id === c.class_id);
+                const parents = c.parents ? c.parents.map(p => p.first_name + ' ' + p.last_name).join(', ') : 'None';
+                return '<tr>' +
+                    '<td><strong>' + escapeHtml(c.first_name) + ' ' + escapeHtml(c.last_name) + '</strong></td>' +
+                    '<td>' + (cls ? '<span class="badge badge-primary">' + escapeHtml(cls.name) + '</span>' : '<span class="badge badge-gray">None</span>') + '</td>' +
+                    '<td>' + escapeHtml(parents) + '</td>' +
+                    '<td>' + (c.allergies ? '<span class="badge badge-danger">Yes</span>' : '<span style="color:var(--gray-400)">None</span>') + '</td>' +
+                    '<td><span class="badge ' + (c.status === 'active' ? 'badge-success' : 'badge-gray') + '">' + c.status + '</span></td>' +
+                    '<td><div style="display:flex;gap:4px;">' +
+                    '<button class="btn btn-ghost btn-icon" onclick="editChild(' + c.id + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+                    '<button class="btn btn-danger btn-icon" onclick="deleteChild(' + c.id + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>' +
+                    '</div></td></tr>';
+            }).join('');
+        }
+
+        function filterChildren() {
+            const q = document.getElementById('childSearch').value.toLowerCase();
+            renderChildren(allChildren.filter(c => (c.first_name + ' ' + c.last_name).toLowerCase().includes(q)));
+        }
+
+        function showChildModal(id) {
+            document.getElementById('childModalTitle').textContent = id ? 'Edit Child' : 'Add Child';
+            document.getElementById('childId').value = id || '';
+            document.getElementById('childFirstName').value = '';
+            document.getElementById('childLastName').value = '';
+            document.getElementById('childDob').value = '';
+            document.getElementById('childClass').value = '';
+            document.getElementById('childAllergies').value = '';
+            document.getElementById('childMedical').value = '';
+            document.getElementById('childPhoto').value = '';
+
+            document.getElementById('childClass').innerHTML = '<option value="">No Class</option>' + allClasses.map(c => '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>').join('');
+            document.getElementById('childParents').innerHTML = allParents.map(p =>
+                '<label class="checkbox-item"><input type="checkbox" value="' + p.id + '"> ' + escapeHtml(p.first_name) + ' ' + escapeHtml(p.last_name) + '</label>'
+            ).join('');
+
+            if (id) {
+                const child = allChildren.find(c => c.id === id);
+                if (child) {
+                    document.getElementById('childFirstName').value = child.first_name;
+                    document.getElementById('childLastName').value = child.last_name;
+                    if (child.date_of_birth) document.getElementById('childDob').value = child.date_of_birth.split('T')[0];
+                    document.getElementById('childClass').value = child.class_id || '';
+                    document.getElementById('childAllergies').value = child.allergies || '';
+                    document.getElementById('childMedical').value = child.medical_notes || '';
+                    document.getElementById('childPhoto').value = child.photo_url || '';
+                    if (child.parents) child.parents.forEach(p => {
+                        const cb = document.querySelector('#childParents input[value="' + p.id + '"]');
+                        if (cb) cb.checked = true;
+                    });
+                }
+            }
+            openModal('childModal');
+        }
+
+        function editChild(id) { showChildModal(id); }
+
+        async function saveChild() {
+            const id = document.getElementById('childId').value;
+            const parentIds = Array.from(document.querySelectorAll('#childParents input:checked')).map(cb => parseInt(cb.value));
+            const data = {
+                first_name: document.getElementById('childFirstName').value,
+                last_name: document.getElementById('childLastName').value,
+                date_of_birth: document.getElementById('childDob').value ? new Date(document.getElementById('childDob').value) : new Date(),
+                allergies: document.getElementById('childAllergies').value,
+                medical_notes: document.getElementById('childMedical').value,
+                photo_url: document.getElementById('childPhoto').value,
+                class_id: document.getElementById('childClass').value || null,
+                parent_ids: parentIds
+            };
+            try {
+                const url = id ? '/children/' + id : '/children';
+                const method = id ? 'PUT' : 'POST';
+                const res = await api(url, { method, body: JSON.stringify(data) });
+                if (res.ok) { closeModal('childModal'); loadChildren(); }
+                else { const d = await res.json(); showMessage('childModalMessage', d.detail || 'Failed', 'error'); }
+            } catch (err) { alert('Failed to save'); }
+        }
+
+        async function deleteChild(id) {
+            if (!confirm('Delete this child record?')) return;
+            await api('/children/' + id, { method: 'DELETE' });
+            loadChildren();
+        }
+
+        // Parents
+        async function loadParents() {
+            try {
+                const [pRes, cRes] = await Promise.all([api('/parents'), api('/children')]);
+                allParents = await pRes.json();
+                allChildren = await cRes.json();
+                renderParents(allParents);
+            } catch (err) { console.error('Parents load failed'); }
+        }
+
+        function renderParents(parents) {
+            const tbody = document.getElementById('parentsTable');
+            if (parents.length === 0) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><h3>No parents added</h3><p>Add parents and guardians</p></div></td></tr>'; return; }
+            tbody.innerHTML = parents.map(p => {
+                const children = allChildren.filter(c => c.parents && c.parents.some(cp => cp.id === p.id));
+                const childNames = children.map(c => c.first_name + ' ' + c.last_name).join(', ') || 'None';
+                return '<tr>' +
+                    '<td><strong>' + escapeHtml(p.first_name) + ' ' + escapeHtml(p.last_name) + '</strong></td>' +
+                    '<td>' + escapeHtml(p.phone) + '</td>' +
+                    '<td>' + (p.email ? escapeHtml(p.email) : '<span style="color:var(--gray-400)">—</span>') + '</td>' +
+                    '<td>' + escapeHtml(childNames) + '</td>' +
+                    '<td><div style="display:flex;gap:4px;">' +
+                    '<button class="btn btn-ghost btn-icon" onclick="editParent(' + p.id + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+                    '<button class="btn btn-danger btn-icon" onclick="deleteParent(' + p.id + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>' +
+                    '</div></td></tr>';
+            }).join('');
+        }
+
+        function filterParents() {
+            const q = document.getElementById('parentSearch').value.toLowerCase();
+            renderParents(allParents.filter(p => (p.first_name + ' ' + p.last_name).toLowerCase().includes(q) || p.phone.includes(q)));
+        }
+
+        function showParentModal(id) {
+            document.getElementById('parentModalTitle').textContent = id ? 'Edit Parent' : 'Add Parent';
+            document.getElementById('parentId').value = id || '';
+            ['parentFirstName','parentLastName','parentPhone','parentEmail','parentAddress','parentEmergency','parentEmergencyPhone','parentNotes'].forEach(el => document.getElementById(el).value = '');
+            if (id) {
+                const p = allParents.find(x => x.id === id);
+                if (p) {
+                    document.getElementById('parentFirstName').value = p.first_name;
+                    document.getElementById('parentLastName').value = p.last_name;
+                    document.getElementById('parentPhone').value = p.phone;
+                    document.getElementById('parentEmail').value = p.email || '';
+                    document.getElementById('parentAddress').value = p.address || '';
+                    document.getElementById('parentEmergency').value = p.emergency_contact || '';
+                    document.getElementById('parentEmergencyPhone').value = p.emergency_phone || '';
+                    document.getElementById('parentNotes').value = p.notes || '';
+                }
+            }
+            openModal('parentModal');
+        }
+
+        function editParent(id) { showParentModal(id); }
+
+        async function saveParent() {
+            const id = document.getElementById('parentId').value;
+            const data = {
+                first_name: document.getElementById('parentFirstName').value,
+                last_name: document.getElementById('parentLastName').value,
+                phone: document.getElementById('parentPhone').value,
+                email: document.getElementById('parentEmail').value,
+                address: document.getElementById('parentAddress').value,
+                emergency_contact: document.getElementById('parentEmergency').value,
+                emergency_phone: document.getElementById('parentEmergencyPhone').value,
+                notes: document.getElementById('parentNotes').value
+            };
+            try {
+                const url = id ? '/parents/' + id : '/parents';
+                const method = id ? 'PUT' : 'POST';
+                const res = await api(url, { method, body: JSON.stringify(data) });
+                if (res.ok) { closeModal('parentModal'); loadParents(); }
+                else { const d = await res.json(); showMessage('parentModalMessage', d.detail || 'Failed', 'error'); }
+            } catch (err) { alert('Failed to save'); }
+        }
+
+        async function deleteParent(id) {
+            if (!confirm('Delete this parent?')) return;
+            await api('/parents/' + id, { method: 'DELETE' });
+            loadParents();
+        }
+
+        // Classes
+        async function loadClasses() {
+            try {
+                const [clRes, cRes] = await Promise.all([api('/classes'), api('/children')]);
+                allClasses = await clRes.json();
+                allChildren = await cRes.json();
+                renderClasses();
+            } catch (err) { console.error('Classes load failed'); }
+        }
+
+        function renderClasses() {
+            const tbody = document.getElementById('classesTable');
+            if (allClasses.length === 0) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><h3>No classes yet</h3><p>Create your first class</p></div></td></tr>'; return; }
+            tbody.innerHTML = allClasses.map(c => {
+                const enrolled = allChildren.filter(ch => ch.class_id === c.id).length;
+                return '<tr>' +
+                    '<td><strong>' + escapeHtml(c.name) + '</strong></td>' +
+                    '<td>' + (c.age_range ? escapeHtml(c.age_range) : '<span style="color:var(--gray-400)">—</span>') + '</td>' +
+                    '<td>' + (c.teacher_name ? escapeHtml(c.teacher_name) : '<span style="color:var(--gray-400)">—</span>') + '</td>' +
+                    '<td>' + (c.max_capacity ? enrolled + ' / ' + c.max_capacity : enrolled + ' / Unlimited') + '</td>' +
+                    '<td><span class="badge badge-primary">' + enrolled + '</span></td>' +
+                    '<td><div style="display:flex;gap:4px;">' +
+                    '<button class="btn btn-ghost btn-icon" onclick="editClass(' + c.id + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+                    '<button class="btn btn-danger btn-icon" onclick="deleteClass(' + c.id + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>' +
+                    '</div></td></tr>';
+            }).join('');
+        }
+
+        function showClassModal(id) {
+            document.getElementById('classModalTitle').textContent = id ? 'Edit Class' : 'Add Class';
+            document.getElementById('classId').value = id || '';
+            ['className','classAge','classCapacity','classTeacher'].forEach(el => document.getElementById(el).value = '');
+            if (id) {
+                const c = allClasses.find(x => x.id === id);
+                if (c) {
+                    document.getElementById('className').value = c.name;
+                    document.getElementById('classAge').value = c.age_range || '';
+                    document.getElementById('classCapacity').value = c.max_capacity || '';
+                    document.getElementById('classTeacher').value = c.teacher_name || '';
+                }
+            }
+            openModal('classModal');
+        }
+
+        function editClass(id) { showClassModal(id); }
+
+        async function saveClass() {
+            const id = document.getElementById('classId').value;
+            const data = {
+                name: document.getElementById('className').value,
+                age_range: document.getElementById('classAge').value,
+                max_capacity: document.getElementById('classCapacity').value ? parseInt(document.getElementById('classCapacity').value) : null,
+                teacher_name: document.getElementById('classTeacher').value
+            };
+            try {
+                const url = id ? '/classes/' + id : '/classes';
+                const method = id ? 'PUT' : 'POST';
+                const res = await api(url, { method, body: JSON.stringify(data) });
+                if (res.ok) { closeModal('classModal'); loadClasses(); }
+                else { const d = await res.json(); showMessage('classModalMessage', d.detail || 'Failed', 'error'); }
+            } catch (err) { alert('Failed to save'); }
+        }
+
+        async function deleteClass(id) {
+            if (!confirm('Delete this class?')) return;
+            await api('/classes/' + id, { method: 'DELETE' });
+            loadClasses();
+        }
+
+        // Daily Reports
+        async function loadReports() {
+            try {
+                const childFilter = document.getElementById('reportChildFilter').value;
+                let url = '/daily-reports';
+                if (childFilter) url += '?child_id=' + childFilter;
+                const res = await api(url);
+                const reports = await res.json();
+
+                // Populate child filter
+                const sel = document.getElementById('reportChildFilter');
+                sel.innerHTML = '<option value="">All Children</option>' + allChildren.map(c => '<option value="' + c.id + '">' + escapeHtml(c.first_name) + ' ' + escapeHtml(c.last_name) + '</option>').join('');
+
+                const list = document.getElementById('reportsList');
+                if (reports.length === 0) { list.innerHTML = '<div class="empty-state"><h3>No reports yet</h3><p>Create daily reports for children</p></div>'; return; }
+
+                const moodEmojis = { happy: '😊', calm: '😌', fussy: '😢', tired: '😴', excited: '🤩' };
+                list.innerHTML = reports.map(r => {
+                    const child = allChildren.find(c => c.id === r.child_id);
+                    const name = child ? child.first_name + ' ' + child.last_name : 'Unknown';
+                    const date = new Date(r.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                    return '<div class="card" style="margin-bottom:12px;"><div class="card-body">' +
+                        '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">' +
+                        '<div><strong style="font-size:15px;">' + escapeHtml(name) + '</strong><div style="font-size:12px;color:var(--gray-500);">' + date + ' by ' + (r.staff_name || 'Staff') + '</div></div>' +
+                        (r.mood ? '<span class="badge badge-info">' + (moodEmojis[r.mood] || '') + ' ' + r.mood + '</span>' : '') +
+                        '</div>' +
+                        (r.meals ? '<div style="margin-bottom:8px;"><strong style="font-size:12px;color:var(--gray-500);">MEALS</strong><p style="font-size:13px;">' + escapeHtml(r.meals) + '</p></div>' : '') +
+                        (r.nap_start ? '<div style="margin-bottom:8px;"><strong style="font-size:12px;color:var(--gray-500);">NAP</strong><p style="font-size:13px;">' + new Date(r.nap_start).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) + (r.nap_end ? ' - ' + new Date(r.nap_end).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '') + '</p></div>' : '') +
+                        (r.activities ? '<div style="margin-bottom:8px;"><strong style="font-size:12px;color:var(--gray-500);">ACTIVITIES</strong><p style="font-size:13px;">' + escapeHtml(r.activities) + '</p></div>' : '') +
+                        (r.diaper_changes != null ? '<div style="margin-bottom:8px;"><strong style="font-size:12px;color:var(--gray-500);">DIAPER CHANGES</strong><p style="font-size:13px;">' + r.diaper_changes + '</p></div>' : '') +
+                        (r.notes ? '<div><strong style="font-size:12px;color:var(--gray-500);">NOTES</strong><p style="font-size:13px;">' + escapeHtml(r.notes) + '</p></div>' : '') +
+                        '</div></div>';
+                }).join('');
+            } catch (err) { console.error('Reports load failed'); }
+        }
+
+        function showReportModal() {
+            document.getElementById('reportChild').innerHTML = allChildren.map(c => '<option value="' + c.id + '">' + escapeHtml(c.first_name) + ' ' + escapeHtml(c.last_name) + '</option>').join('');
+            ['reportMeals','reportActivities','reportNotes'].forEach(el => document.getElementById(el).value = '');
+            document.getElementById('reportNapStart').value = '';
+            document.getElementById('reportNapEnd').value = '';
+            document.getElementById('reportMood').value = '';
+            document.getElementById('reportDiapers').value = '';
+            openModal('reportModal');
+        }
+
+        async function saveReport() {
+            const napStart = document.getElementById('reportNapStart').value;
+            const napEnd = document.getElementById('reportNapEnd').value;
+            const today = new Date();
+            const data = {
+                child_id: parseInt(document.getElementById('reportChild').value),
+                meals: document.getElementById('reportMeals').value,
+                nap_start: napStart ? new Date(today.toDateString() + ' ' + napStart) : null,
+                nap_end: napEnd ? new Date(today.toDateString() + ' ' + napEnd) : null,
+                activities: document.getElementById('reportActivities').value,
+                mood: document.getElementById('reportMood').value,
+                diaper_changes: document.getElementById('reportDiapers').value ? parseInt(document.getElementById('reportDiapers').value) : null,
+                notes: document.getElementById('reportNotes').value
+            };
+            try {
+                const res = await api('/daily-reports', { method: 'POST', body: JSON.stringify(data) });
+                if (res.ok) { closeModal('reportModal'); loadReports(); }
+                else { const d = await res.json(); showMessage('reportModalMessage', d.detail || 'Failed', 'error'); }
+            } catch (err) { alert('Failed to save'); }
+        }
+
+        // Incidents
+        async function loadIncidents() {
+            try {
+                const res = await api('/incidents');
+                const incidents = await res.json();
+                const list = document.getElementById('incidentsList');
+                if (incidents.length === 0) { list.innerHTML = '<div class="empty-state"><h3>No incidents logged</h3><p>Everything is running smoothly</p></div>'; return; }
+                const severityColors = { low: 'badge-warning', medium: 'badge-danger', high: 'badge-danger' };
+                list.innerHTML = incidents.map(i => {
+                    const child = allChildren.find(c => c.id === i.child_id);
+                    const name = child ? child.first_name + ' ' + child.last_name : 'Unknown';
+                    const date = new Date(i.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                    return '<div class="card" style="margin-bottom:12px;"><div class="card-body">' +
+                        '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">' +
+                        '<div><strong style="font-size:15px;">' + escapeHtml(name) + '</strong>' +
+                        '<div style="font-size:12px;color:var(--gray-500);">' + date + ' by ' + (i.staff_name || 'Staff') + '</div></div>' +
+                        '<div style="display:flex;gap:6px;">' +
+                        '<span class="badge ' + (severityColors[i.severity] || 'badge-gray') + '">' + (i.severity || 'N/A') + '</span>' +
+                        (i.parent_notified ? '<span class="badge badge-info">Parent Notified</span>' : '<span class="badge badge-gray">Parent Not Notified</span>') +
+                        '</div></div>' +
+                        '<div style="margin-bottom:8px;"><strong style="font-size:12px;color:var(--gray-500);">TYPE</strong><p style="font-size:13px;text-transform:capitalize;">' + escapeHtml(i.incident_type.replace('_', ' ')) + '</p></div>' +
+                        '<div style="margin-bottom:8px;"><strong style="font-size:12px;color:var(--gray-500);">DESCRIPTION</strong><p style="font-size:13px;">' + escapeHtml(i.description) + '</p></div>' +
+                        (i.action_taken ? '<div><strong style="font-size:12px;color:var(--gray-500);">ACTION TAKEN</strong><p style="font-size:13px;">' + escapeHtml(i.action_taken) + '</p></div>' : '') +
+                        '</div></div>';
+                }).join('');
+            } catch (err) { console.error('Incidents load failed'); }
+        }
+
+        function showIncidentModal() {
+            document.getElementById('incidentChild').innerHTML = allChildren.map(c => '<option value="' + c.id + '">' + escapeHtml(c.first_name) + ' ' + escapeHtml(c.last_name) + '</option>').join('');
+            ['incidentDesc','incidentAction'].forEach(el => document.getElementById(el).value = '');
+            document.getElementById('incidentType').value = '';
+            document.getElementById('incidentSeverity').value = 'low';
+            document.getElementById('incidentNotified').checked = false;
+            openModal('incidentModal');
+        }
+
+        async function saveIncident() {
+            const data = {
+                child_id: parseInt(document.getElementById('incidentChild').value),
+                incident_type: document.getElementById('incidentType').value,
+                description: document.getElementById('incidentDesc').value,
+                severity: document.getElementById('incidentSeverity').value,
+                action_taken: document.getElementById('incidentAction').value,
+                parent_notified: document.getElementById('incidentNotified').checked
+            };
+            if (!data.incident_type || !data.description) { alert('Please fill in required fields'); return; }
+            try {
+                const res = await api('/incidents', { method: 'POST', body: JSON.stringify(data) });
+                if (res.ok) { closeModal('incidentModal'); loadIncidents(); }
+                else { const d = await res.json(); showMessage('incidentModalMessage', d.detail || 'Failed', 'error'); }
+            } catch (err) { alert('Failed to save'); }
+        }
+
+        // Settings
+        async function loadSettings() {
+            try {
+                const res = await api('/daycares');
+                const dcs = await res.json();
+                if (dcs.length > 0) {
+                    daycare = dcs[0];
+                    document.getElementById('settingsName').value = daycare.name || '';
+                    document.getElementById('settingsAddress').value = daycare.address || '';
+                    document.getElementById('settingsPhone').value = daycare.phone || '';
+                    document.getElementById('settingsEmail').value = daycare.email || '';
+                    document.getElementById('settingsLogo').value = daycare.logo_url || '';
+                }
+            } catch (err) { console.error('Settings load failed'); }
+        }
+
+        async function saveSettings() {
+            try {
+                const res = await api('/daycares/' + daycare.id, { method: 'PUT', body: JSON.stringify({
+                    name: document.getElementById('settingsName').value,
+                    address: document.getElementById('settingsAddress').value,
+                    phone: document.getElementById('settingsPhone').value,
+                    email: document.getElementById('settingsEmail').value,
+                    logo_url: document.getElementById('settingsLogo').value
+                })});
+                if (res.ok) {
+                    daycare = await res.json();
+                    updateSidebar();
+                    showMessage('settingsMessage', 'Settings saved!', 'success');
+                }
+            } catch (err) { showMessage('settingsMessage', 'Failed to save', 'error'); }
+        }
+
+        // Modal helpers
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        document.querySelectorAll('.modal-overlay').forEach(o => { o.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('active'); }); });
+
+        function showMessage(elId, msg, type) {
+            const el = document.getElementById(elId);
+            el.innerHTML = '<div class="message ' + type + '">' + msg + '</div>';
+            setTimeout(() => el.innerHTML = '', 3000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Enter key support
+        document.getElementById('loginPassword').addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
+
+        if (token) initApp();
+    </script>
+</body>
+</html>

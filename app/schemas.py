@@ -430,10 +430,14 @@ class Incident(BaseModel):
     staff_name: Optional[str] = None
 
 
-class PaginatedResponse(BaseModel):
+from typing import Optional, List, TypeVar, Generic
+
+T = TypeVar("T")
+
+class PaginatedResponse(BaseModel, Generic[T]):
     model_config = ConfigDict(from_attributes=True)
 
     total: int
     skip: int
     limit: int
-    items: list
+    items: List[T]

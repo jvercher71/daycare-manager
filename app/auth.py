@@ -1,12 +1,12 @@
 import secrets
-import os
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
 import bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.database import get_db
 from app.models import User
 from app.config import settings
@@ -41,8 +41,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return encoded_jwt
 
 
-def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
-    user = db.query(User).filter(User.email == email).first()
+async def authenticate_user(db: AsyncSession, email: str, password: str) -> Optional[User]:
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalars().first()
     if not user:
         return None
     if not user.is_active:
@@ -52,9 +53,9 @@ def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
     return user
 
 
-def get_current_user(
+async def get_current_user(
     token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -68,7 +69,8 @@ def get_current_user(
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    user = db.query(User).filter(User.email == email).first()
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalars().first()
     if user is None:
         raise credentials_exception
     if not user.is_active:
@@ -80,7 +82,7 @@ def get_current_user(
 
 
 def require_role(*roles: str):
-    def role_checker(current_user: User = Depends(get_current_user)) -> User:
+    async def role_checker(current_user: User = Depends(get_current_user)) -> User:
         if current_user.role not in roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -90,8 +92,9 @@ def require_role(*roles: str):
     return role_checker
 
 
-def generate_password_reset_token(db: Session, email: str) -> Optional[str]:
-    user = db.query(User).filter(User.email == email).first()
+async def generate_password_reset_token(db: AsyncSession, email: str) -> Optional[str]:
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalars().first()
     if not user:
         return None
     token = secrets.token_urlsafe(32)

@@ -17,8 +17,6 @@ build/
 htmlcov/
 .mypy_cache/
 .ruff_cache/
-alembic/versions/*.py
-!alembic/versions/.gitkeep
 *.log
 *.sqlite3
 .DS_Store

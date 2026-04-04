@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import engine, get_db, Base, init_db
+from app.database import init_db
 from app.config import settings
 from app.middleware.rate_limiter import rate_limit_middleware
 from app.routers import auth, daycares, parents, children, classes, attendance, daily_reports, incidents, dashboard
@@ -16,23 +16,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger("daycare_manager")
 
-_db_initialized = False
-
-
-def _ensure_db():
-    global _db_initialized
-    if not _db_initialized:
-        init_db()
-        _db_initialized = True
-
-
-_ensure_db()
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Initializing database...")
-    init_db()
+    await init_db()
     logger.info("Daycare Manager API started")
     yield
     logger.info("Shutting down...")

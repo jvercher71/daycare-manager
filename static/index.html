@@ -252,7 +252,7 @@
                     </div>
                     <div class="form-group">
                         <label>Password</label>
-                        <input type="password" id="regPassword" class="form-input" placeholder="Min 6 characters" required>
+                        <input type="password" id="regPassword" class="form-input" placeholder="Min 8 chars, 1 uppercase, 1 number" required>
                     </div>
                     <div class="form-group">
                         <label>Role</label>
@@ -827,7 +827,7 @@
 
         function showAuthTab(tab) {
             document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
+            document.querySelectorAll('.auth-tab').forEach(t => { if (t.textContent.toLowerCase().includes(tab === 'login' ? 'sign in' : 'sign up')) t.classList.add('active'); });
             document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
             document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
         }
@@ -846,16 +846,25 @@
             } catch (err) { showMessage('authMessage', 'Login failed', 'error'); }
         }
 
+        function extractError(d) {
+            if (!d) return 'An error occurred';
+            if (typeof d.detail === 'string') return d.detail;
+            if (Array.isArray(d.detail)) return d.detail.map(e => e.msg || JSON.stringify(e)).join(', ');
+            if (typeof d.detail === 'object') return JSON.stringify(d.detail);
+            return d.message || 'An error occurred';
+        }
+
         async function register() {
-            const username = document.getElementById('regUsername').value;
-            const email = document.getElementById('regEmail').value;
+            const username = document.getElementById('regUsername').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
             const password = document.getElementById('regPassword').value;
             const role = document.getElementById('regRole').value;
+            if (!username || !email || !password) { showMessage('authMessage', 'Please fill in all fields', 'error'); return; }
             try {
                 const res = await fetch('/api/v1/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, username, password, role }) });
                 if (res.ok) { showMessage('authMessage', 'Account created! Sign in now.', 'success'); showAuthTab('login'); }
-                else { const d = await res.json(); showMessage('authMessage', d.detail || 'Failed', 'error'); }
-            } catch (err) { showMessage('authMessage', 'Registration failed', 'error'); }
+                else { const d = await res.json(); showMessage('authMessage', extractError(d), 'error'); }
+            } catch (err) { showMessage('authMessage', 'Registration failed. Is the server running?', 'error'); }
         }
 
         function logout() {

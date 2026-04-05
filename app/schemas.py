@@ -37,8 +37,8 @@ class UserCreate(BaseModel):
             raise ValueError("Username must be at least 3 characters")
         if len(v) > 50:
             raise ValueError("Username must not exceed 50 characters")
-        if not re.match(r"^[a-zA-Z0-9_-]+$", v):
-            raise ValueError("Username can only contain letters, numbers, hyphens, and underscores")
+        if not re.match(r"^[a-zA-Z0-9 _-]+$", v):
+            raise ValueError("Username can only contain letters, numbers, spaces, hyphens, and underscores")
         return v
 
     @field_validator("password")

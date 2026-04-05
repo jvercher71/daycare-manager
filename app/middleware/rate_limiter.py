@@ -43,7 +43,7 @@ class RateLimiter:
         self.requests.clear()
 
 
-auth_rate_limiter = RateLimiter(max_requests=5, window_seconds=60)
+auth_rate_limiter = RateLimiter(max_requests=30, window_seconds=60)
 api_rate_limiter = RateLimiter(max_requests=settings.RATE_LIMIT_MAX_REQUESTS, window_seconds=settings.RATE_LIMIT_WINDOW_SECONDS)
 
 

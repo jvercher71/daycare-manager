@@ -308,6 +308,34 @@ class TestChildren:
         assert response.status_code == 200
 
     @pytest.mark.asyncio
+    async def test_list_and_get_child_with_parent_serializes(self, authorized_client):
+        # Regression: a child linked to a parent must serialize without an
+        # async lazy-load of parent.children (previously raised MissingGreenlet
+        # and 500'd the children list once any child had a parent).
+        parent_resp = await authorized_client.post("/api/v1/parents/", json={
+            "first_name": "Pat", "last_name": "Guardian", "phone": "(217) 555-0123",
+        })
+        assert parent_resp.status_code == 201, parent_resp.json()
+        parent_id = parent_resp.json()["id"]
+
+        child_resp = await authorized_client.post("/api/v1/children/", json={
+            "first_name": "Linked", "last_name": "Child",
+            "date_of_birth": "2023-03-03T00:00:00", "parent_ids": [parent_id],
+        })
+        assert child_resp.status_code == 201, child_resp.json()
+        child_id = child_resp.json()["id"]
+
+        list_resp = await authorized_client.get("/api/v1/children/?limit=100")
+        assert list_resp.status_code == 200
+        match = [c for c in list_resp.json()["items"] if c["id"] == child_id]
+        assert match, "linked child missing from list"
+        assert any(p["id"] == parent_id for p in match[0]["parents"])
+
+        get_resp = await authorized_client.get(f"/api/v1/children/{child_id}")
+        assert get_resp.status_code == 200
+        assert get_resp.json()["parents"][0]["last_name"] == "Guardian"
+
+    @pytest.mark.asyncio
     async def test_delete_child(self, authorized_client):
         create_resp = await authorized_client.post("/api/v1/children/", json={
             "first_name": "Toddler",

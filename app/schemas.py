@@ -217,7 +217,13 @@ class ParentCreate(BaseModel):
         return sanitize_string(v)
 
 
-class Parent(BaseModel):
+class ParentBrief(BaseModel):
+    """Parent without the nested ``children`` collection.
+
+    Used when a parent is embedded inside a child (ChildWithParents) so that
+    serialization never has to load ``parent.children`` — which would trigger
+    an async lazy-load and fail.
+    """
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -231,6 +237,9 @@ class Parent(BaseModel):
     notes: Optional[str] = None
     daycare_id: Optional[int] = None
     is_deleted: bool = False
+
+
+class Parent(ParentBrief):
     children: List["Child"] = []
 
 
@@ -277,7 +286,7 @@ class Child(BaseModel):
 
 
 class ChildWithParents(Child):
-    parents: List[Parent] = []
+    parents: List[ParentBrief] = []
 
 
 class ClassCreate(BaseModel):

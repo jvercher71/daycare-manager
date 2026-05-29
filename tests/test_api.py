@@ -375,3 +375,140 @@ class TestOpenAPI:
         data = response.json()
         assert "openapi" in data
         assert "info" in data
+
+
+class TestBilling:
+    @pytest_asyncio.fixture
+    async def billing_client(self, client, db_session):
+        from app.models import Daycare, User as UserModel, Child, Invoice, Payment
+        from datetime import datetime
+        # Clean slate for billing-related tables (only Users is cleared by `client`).
+        for table in [Payment.__table__, Invoice.__table__, Child.__table__, Daycare.__table__]:
+            await db_session.execute(table.delete())
+        await db_session.commit()
+
+        daycare = Daycare(name="Sprout Test Center")
+        db_session.add(daycare)
+        await db_session.commit()
+        await db_session.refresh(daycare)
+
+        user = UserModel(
+            email="biller@example.com",
+            username="biller",
+            hashed_password=get_password_hash("TestPass123"),
+            role="admin",
+            is_active=True,
+            daycare_id=daycare.id,
+        )
+        db_session.add(user)
+        await db_session.commit()
+
+        child = Child(
+            first_name="Ava", last_name="Smith",
+            date_of_birth=datetime(2022, 1, 1), daycare_id=daycare.id,
+        )
+        db_session.add(child)
+        await db_session.commit()
+        await db_session.refresh(child)
+
+        resp = await client.post(
+            "/api/v1/auth/token",
+            data={"username": "biller@example.com", "password": "TestPass123"},
+        )
+        assert resp.status_code == 200, resp.json()
+        client.headers = {"Authorization": f"Bearer {resp.json()['access_token']}"}
+        return {"client": client, "child_id": child.id, "daycare_id": daycare.id}
+
+    async def _create_invoice(self, c, **overrides):
+        body = {"description": "May tuition", "amount": 50.00}
+        body.update(overrides)
+        return await c.post("/api/v1/billing/invoices", json=body)
+
+    @pytest.mark.asyncio
+    async def test_create_invoice_converts_dollars_to_cents(self, billing_client):
+        c = billing_client["client"]
+        r = await self._create_invoice(c, child_id=billing_client["child_id"])
+        assert r.status_code == 201, r.json()
+        data = r.json()
+        assert data["amount_cents"] == 5000
+        assert data["amount"] == 50.00
+        assert data["balance"] == 50.00
+        assert data["status"] == "draft"
+
+    @pytest.mark.asyncio
+    async def test_partial_then_full_payment_updates_status(self, billing_client):
+        c = billing_client["client"]
+        inv = (await self._create_invoice(c, status="sent")).json()
+        inv_id = inv["id"]
+
+        r1 = await c.post(f"/api/v1/billing/invoices/{inv_id}/payments", json={"amount": 20.00, "method": "cash"})
+        assert r1.status_code == 201, r1.json()
+        d1 = r1.json()
+        assert d1["amount_paid"] == 20.00
+        assert d1["balance"] == 30.00
+        assert d1["status"] == "partial"
+
+        r2 = await c.post(f"/api/v1/billing/invoices/{inv_id}/payments", json={"amount": 30.00, "method": "card"})
+        assert r2.status_code == 201
+        d2 = r2.json()
+        assert d2["balance"] == 0.00
+        assert d2["status"] == "paid"
+        assert len(d2["payments"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_overdue_status_is_computed_on_read(self, billing_client):
+        c = billing_client["client"]
+        inv = (await self._create_invoice(c, status="sent", due_date="2020-01-01T00:00:00")).json()
+        r = await c.get("/api/v1/billing/invoices")
+        assert r.status_code == 200
+        match = [i for i in r.json() if i["id"] == inv["id"]]
+        assert match and match[0]["status"] == "overdue"
+
+    @pytest.mark.asyncio
+    async def test_payment_must_be_positive(self, billing_client):
+        c = billing_client["client"]
+        inv = (await self._create_invoice(c)).json()
+        r = await c.post(f"/api/v1/billing/invoices/{inv['id']}/payments", json={"amount": -5})
+        assert r.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_cannot_pay_void_invoice(self, billing_client):
+        c = billing_client["client"]
+        inv = (await self._create_invoice(c)).json()
+        await c.patch(f"/api/v1/billing/invoices/{inv['id']}", json={"status": "void"})
+        r = await c.post(f"/api/v1/billing/invoices/{inv['id']}/payments", json={"amount": 10})
+        assert r.status_code == 400
+
+    @pytest.mark.asyncio
+    async def test_summary_reflects_outstanding_and_collected(self, billing_client):
+        c = billing_client["client"]
+        inv = (await self._create_invoice(c, amount=100.00, status="sent")).json()
+        await c.post(f"/api/v1/billing/invoices/{inv['id']}/payments", json={"amount": 40.00})
+        r = await c.get("/api/v1/billing/summary")
+        assert r.status_code == 200
+        s = r.json()
+        assert s["total_invoiced"] == 100.00
+        assert s["outstanding"] == 60.00
+        assert s["collected_this_month"] == 40.00
+
+    @pytest.mark.asyncio
+    async def test_missing_invoice_returns_404(self, billing_client):
+        c = billing_client["client"]
+        r = await c.get("/api/v1/billing/invoices/999999")
+        assert r.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_invoice_rejects_child_from_other_daycare(self, billing_client, db_session):
+        from app.models import Daycare, Child
+        from datetime import datetime
+        other = Daycare(name="Other Center")
+        db_session.add(other)
+        await db_session.commit()
+        await db_session.refresh(other)
+        other_child = Child(first_name="Zoe", last_name="Doe", date_of_birth=datetime(2021, 5, 5), daycare_id=other.id)
+        db_session.add(other_child)
+        await db_session.commit()
+        await db_session.refresh(other_child)
+        c = billing_client["client"]
+        r = await self._create_invoice(c, child_id=other_child.id)
+        assert r.status_code == 404

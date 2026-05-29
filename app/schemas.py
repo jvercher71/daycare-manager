@@ -3,8 +3,8 @@ import re
 import html
 from datetime import datetime, timezone
 from typing import Optional, List
-from pydantic import BaseModel, field_validator, EmailStr, ConfigDict
-from app.models import UserRole
+from pydantic import BaseModel, field_validator, EmailStr, ConfigDict, computed_field
+from app.models import UserRole, InvoiceStatus, PaymentMethod
 
 
 def sanitize_string(value: Optional[str]) -> Optional[str]:
@@ -433,6 +433,208 @@ class Incident(BaseModel):
 from typing import Optional, List, TypeVar, Generic
 
 T = TypeVar("T")
+
+_VALID_INVOICE_STATUSES = {s.value for s in InvoiceStatus}
+_VALID_PAYMENT_METHODS = {m.value for m in PaymentMethod}
+
+
+class InvoiceCreate(BaseModel):
+    description: str
+    amount: float  # in dollars; converted to cents on the server
+    child_id: Optional[int] = None
+    parent_id: Optional[int] = None
+    due_date: Optional[datetime] = None
+    notes: Optional[str] = None
+    status: str = InvoiceStatus.DRAFT.value
+
+    @field_validator("description")
+    @classmethod
+    def validate_description(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("Description is required")
+        if len(v) > 200:
+            raise ValueError("Description must not exceed 200 characters")
+        return sanitize_string(v)
+
+    @field_validator("amount")
+    @classmethod
+    def validate_amount(cls, v: float) -> float:
+        if v <= 0:
+            raise ValueError("Amount must be greater than zero")
+        if v > 1_000_000:
+            raise ValueError("Amount is unrealistically large")
+        return round(v, 2)
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: str) -> str:
+        v = v.lower().strip()
+        if v not in _VALID_INVOICE_STATUSES:
+            raise ValueError(f"Status must be one of: {', '.join(sorted(_VALID_INVOICE_STATUSES))}")
+        return v
+
+    @field_validator("notes")
+    @classmethod
+    def sanitize_notes(cls, v: Optional[str]) -> Optional[str]:
+        return sanitize_string(v)
+
+
+class InvoiceUpdate(BaseModel):
+    description: Optional[str] = None
+    amount: Optional[float] = None
+    due_date: Optional[datetime] = None
+    notes: Optional[str] = None
+    status: Optional[str] = None
+
+    @field_validator("amount")
+    @classmethod
+    def validate_amount(cls, v: Optional[float]) -> Optional[float]:
+        if v is not None:
+            if v <= 0:
+                raise ValueError("Amount must be greater than zero")
+            if v > 1_000_000:
+                raise ValueError("Amount is unrealistically large")
+            return round(v, 2)
+        return v
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            v = v.lower().strip()
+            if v not in _VALID_INVOICE_STATUSES:
+                raise ValueError(f"Status must be one of: {', '.join(sorted(_VALID_INVOICE_STATUSES))}")
+        return v
+
+    @field_validator("description", "notes")
+    @classmethod
+    def sanitize_text(cls, v: Optional[str]) -> Optional[str]:
+        return sanitize_string(v)
+
+
+class PaymentCreate(BaseModel):
+    amount: float  # in dollars
+    method: str = PaymentMethod.CASH.value
+    reference: Optional[str] = None
+    payment_date: Optional[datetime] = None
+    notes: Optional[str] = None
+
+    @field_validator("amount")
+    @classmethod
+    def validate_amount(cls, v: float) -> float:
+        if v <= 0:
+            raise ValueError("Payment amount must be greater than zero")
+        if v > 1_000_000:
+            raise ValueError("Amount is unrealistically large")
+        return round(v, 2)
+
+    @field_validator("method")
+    @classmethod
+    def validate_method(cls, v: str) -> str:
+        v = v.lower().strip()
+        if v not in _VALID_PAYMENT_METHODS:
+            raise ValueError(f"Method must be one of: {', '.join(sorted(_VALID_PAYMENT_METHODS))}")
+        return v
+
+    @field_validator("reference", "notes")
+    @classmethod
+    def sanitize_text(cls, v: Optional[str]) -> Optional[str]:
+        return sanitize_string(v)
+
+
+class Payment(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    invoice_id: int
+    amount_cents: int
+    method: str
+    reference: Optional[str] = None
+    processor: Optional[str] = None
+    processor_txn_id: Optional[str] = None
+    payment_date: Optional[datetime] = None
+    notes: Optional[str] = None
+    recorded_by: Optional[str] = None
+
+    @computed_field
+    @property
+    def amount(self) -> float:
+        return round(self.amount_cents / 100, 2)
+
+
+class Invoice(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    daycare_id: int
+    child_id: Optional[int] = None
+    parent_id: Optional[int] = None
+    description: str
+    amount_cents: int
+    issue_date: Optional[datetime] = None
+    due_date: Optional[datetime] = None
+    status: str
+    notes: Optional[str] = None
+    is_deleted: bool = False
+    created_at: Optional[datetime] = None
+    payments: List[Payment] = []
+
+    @computed_field
+    @property
+    def amount(self) -> float:
+        return round(self.amount_cents / 100, 2)
+
+    @computed_field
+    @property
+    def amount_paid_cents(self) -> int:
+        return sum(p.amount_cents for p in self.payments)
+
+    @computed_field
+    @property
+    def amount_paid(self) -> float:
+        return round(self.amount_paid_cents / 100, 2)
+
+    @computed_field
+    @property
+    def balance_cents(self) -> int:
+        return self.amount_cents - self.amount_paid_cents
+
+    @computed_field
+    @property
+    def balance(self) -> float:
+        return round(self.balance_cents / 100, 2)
+
+
+class BillingSummary(BaseModel):
+    total_invoiced_cents: int
+    outstanding_cents: int
+    collected_this_month_cents: int
+    overdue_count: int
+    overdue_cents: int
+    draft_count: int
+    paid_count: int
+
+    @computed_field
+    @property
+    def total_invoiced(self) -> float:
+        return round(self.total_invoiced_cents / 100, 2)
+
+    @computed_field
+    @property
+    def outstanding(self) -> float:
+        return round(self.outstanding_cents / 100, 2)
+
+    @computed_field
+    @property
+    def collected_this_month(self) -> float:
+        return round(self.collected_this_month_cents / 100, 2)
+
+    @computed_field
+    @property
+    def overdue(self) -> float:
+        return round(self.overdue_cents / 100, 2)
+
 
 class PaginatedResponse(BaseModel, Generic[T]):
     model_config = ConfigDict(from_attributes=True)

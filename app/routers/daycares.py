@@ -22,6 +22,12 @@ async def create_daycare(
     db.add(db_daycare)
     await db.commit()
     await db.refresh(db_daycare)
+    # Associate the creating user with this daycare (single-site model) so that
+    # daycare-scoped resources (children, invoices, etc.) work for them.
+    if current_user.daycare_id is None:
+        current_user.daycare_id = db_daycare.id
+        db.add(current_user)
+        await db.commit()
     return db_daycare
 
 
@@ -32,9 +38,13 @@ async def list_daycares(
     db: AsyncSession = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
 ):
-    total_result = await db.execute(select(func.count()).select_from(DaycareModel))
+    # Scope to the current user's daycare so tenants don't see each other's data.
+    if current_user.daycare_id is None:
+        return {"total": 0, "skip": skip, "limit": limit, "items": []}
+    query = select(DaycareModel).where(DaycareModel.id == current_user.daycare_id)
+    total_result = await db.execute(select(func.count()).select_from(query.subquery()))
     total = total_result.scalar()
-    result = await db.execute(select(DaycareModel).offset(skip).limit(limit))
+    result = await db.execute(query.offset(skip).limit(limit))
     items = result.scalars().all()
     return {"total": total, "skip": skip, "limit": limit, "items": items}
 

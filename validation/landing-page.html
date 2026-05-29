@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sprout — Simple, flat-price daycare software</title>
+<!--
+  ============================================================
+  VALIDATION LANDING PAGE — read before going live
+  ------------------------------------------------------------
+  1. Replace "Sprout" with your real product name (Ctrl+F).
+  2. Wire up the email form:
+       - Easiest free option: create a form at https://formspree.io
+         then paste your endpoint into the form's `action` below.
+       - Replace YOUR_FORM_ID in the action attribute.
+  3. Deploy free: drag this file onto https://app.netlify.com/drop
+     OR use Vercel (you already have it set up).
+  4. The ONLY goal of this page is to measure: do real centers
+     give you their email? That's your demand signal.
+  ============================================================
+-->
+<style>
+  :root {
+    --green: #2e7d5b;
+    --green-dark: #1f5a40;
+    --cream: #faf7f0;
+    --ink: #243027;
+    --muted: #5c6b61;
+    --accent: #f4a259;
+    --card: #ffffff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--cream);
+    line-height: 1.6;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
+  header { padding: 28px 0; }
+  .logo { font-weight: 800; font-size: 22px; color: var(--green); letter-spacing: -0.02em; }
+  .logo span { color: var(--accent); }
+
+  .hero { text-align: center; padding: 56px 0 40px; }
+  .badge {
+    display: inline-block; background: #e7f1ea; color: var(--green-dark);
+    font-size: 13px; font-weight: 600; padding: 6px 14px; border-radius: 999px; margin-bottom: 22px;
+  }
+  .hero h1 {
+    font-size: clamp(32px, 5vw, 52px); line-height: 1.1; letter-spacing: -0.03em;
+    max-width: 18ch; margin: 0 auto 18px; font-weight: 800;
+  }
+  .hero p.sub { font-size: clamp(17px, 2.2vw, 21px); color: var(--muted); max-width: 52ch; margin: 0 auto 32px; }
+
+  form.signup { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; max-width: 480px; margin: 0 auto; }
+  form.signup input[type="email"] {
+    flex: 1 1 260px; padding: 15px 18px; font-size: 16px; border: 1.5px solid #d7ddd6;
+    border-radius: 12px; background: #fff; outline: none;
+  }
+  form.signup input[type="email"]:focus { border-color: var(--green); }
+  form.signup button {
+    padding: 15px 26px; font-size: 16px; font-weight: 700; color: #fff; background: var(--green);
+    border: none; border-radius: 12px; cursor: pointer; transition: background .15s;
+  }
+  form.signup button:hover { background: var(--green-dark); }
+  .formnote { font-size: 13px; color: var(--muted); margin-top: 14px; }
+
+  .strip { background: #fff; border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 18px 0; margin-top: 36px; }
+  .strip p { text-align: center; color: var(--muted); font-size: 15px; }
+  .strip b { color: var(--ink); }
+
+  .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 22px; padding: 64px 0; }
+  .card { background: var(--card); border: 1px solid #ece7dc; border-radius: 16px; padding: 28px; }
+  .card .ico { font-size: 28px; margin-bottom: 12px; }
+  .card h3 { font-size: 19px; margin-bottom: 8px; letter-spacing: -0.01em; }
+  .card p { color: var(--muted); font-size: 15px; }
+
+  .who { background: #eef4f0; border-radius: 20px; padding: 44px; text-align: center; margin-bottom: 64px; }
+  .who h2 { font-size: 26px; margin-bottom: 12px; letter-spacing: -0.02em; }
+  .who p { color: var(--muted); max-width: 56ch; margin: 0 auto 8px; }
+
+  .founder { display: flex; gap: 20px; align-items: flex-start; padding: 0 0 64px; max-width: 720px; margin: 0 auto; }
+  .founder .q { font-size: 40px; color: var(--accent); line-height: 1; font-weight: 800; }
+  .founder p { font-size: 17px; color: var(--ink); }
+  .founder small { color: var(--muted); display: block; margin-top: 10px; }
+
+  .cta-bottom { text-align: center; padding: 56px 0 72px; }
+  .cta-bottom h2 { font-size: 28px; margin-bottom: 22px; letter-spacing: -0.02em; }
+
+  footer { border-top: 1px solid #e6e1d6; padding: 28px 0; text-align: center; color: var(--muted); font-size: 14px; }
+
+  .thanks { display: none; background: #e7f1ea; color: var(--green-dark); padding: 16px; border-radius: 12px; font-weight: 600; max-width: 480px; margin: 0 auto; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="wrap"><div class="logo">Spr<span>oo</span>t</div></div>
+  </header>
+
+  <section class="hero">
+    <div class="wrap">
+      <div class="badge">Built for small centers — not the big chains</div>
+      <h1>Daycare software that doesn't charge you per child.</h1>
+      <p class="sub">One flat monthly price. Parent updates, billing, attendance, and compliance — all included. No setup fees, no surprise charges as you grow.</p>
+
+      <form class="signup" id="signupForm" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+        <input type="email" name="email" placeholder="you@yourcenter.com" required />
+        <button type="submit">Get early access</button>
+      </form>
+      <p class="formnote">Be first to try it. No spam, no commitment — just an email when it's ready.</p>
+      <div class="thanks" id="thanks">Thanks! You're on the early-access list. We'll be in touch. 🌱</div>
+    </div>
+  </section>
+
+  <div class="strip">
+    <div class="wrap"><p>Centers on per-child plans can pay <b>$200–$350/month</b>. We think a small center should pay <b>one flat price</b> — full stop.</p></div>
+  </div>
+
+  <section class="wrap">
+    <div class="features">
+      <div class="card">
+        <div class="ico">📱</div>
+        <h3>Parents stay in the loop</h3>
+        <p>Photos, meals, naps, and daily notes sent straight to parents' phones. The updates families love, without the per-family fee.</p>
+      </div>
+      <div class="card">
+        <div class="ico">💳</div>
+        <h3>Billing that runs itself</h3>
+        <p>Tuition invoices, payment tracking, and reminders in one place. Spend Sunday with your family, not a spreadsheet.</p>
+      </div>
+      <div class="card">
+        <div class="ico">✅</div>
+        <h3>Compliance, included</h3>
+        <p>Attendance, ratios, incident logs, and audit-ready records — not locked behind a pricier tier. It's just in the box.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="who">
+      <h2>Made for centers with 10–50 kids</h2>
+      <p>Too small for the enterprise tools that charge a fortune. Too busy for spreadsheets and paper sign-in sheets.</p>
+      <p>If that's you, we're building this for you.</p>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="founder">
+      <div class="q">&ldquo;</div>
+      <div>
+        <p>I'm building Sprout because small daycare owners deserve good software without enterprise pricing or a finance degree to set it up. I'd love to talk to a few directors about what actually slows your day down — your input shapes what gets built first.</p>
+        <small>— Johnny, founder</small>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-bottom">
+    <div class="wrap">
+      <h2>Want a say in what we build?</h2>
+      <form class="signup" action="https://formspree.io/f/YOUR_FORM_ID" method="POST" onsubmit="document.getElementById('signupForm').dispatchEvent(new Event('submit'))">
+        <input type="email" name="email" placeholder="you@yourcenter.com" required />
+        <button type="submit">Join the early list</button>
+      </form>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">© 2026 Sprout · A simpler way to run your center</div>
+  </footer>
+
+<script>
+  // Lightweight UX: show a thank-you instead of leaving the page (works once Formspree is wired up).
+  var form = document.getElementById('signupForm');
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      // If the form action still has the placeholder, prevent submit and remind the owner.
+      if (form.action.indexOf('YOUR_FORM_ID') !== -1) {
+        e.preventDefault();
+        alert('Setup note: connect this form to a Formspree (or similar) endpoint before going live. See the comment at the top of the HTML.');
+        return;
+      }
+      e.preventDefault();
+      var data = new FormData(form);
+      fetch(form.action, { method: 'POST', body: data, headers: { 'Accept': 'application/json' } })
+        .then(function () {
+          form.style.display = 'none';
+          document.querySelector('.formnote').style.display = 'none';
+          document.getElementById('thanks').style.display = 'block';
+        })
+        .catch(function () { form.submit(); });
+    });
+  }
+</script>
+</body>
+</html>

@@ -338,6 +338,10 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                         Incidents
                     </button>
+                    <button class="nav-item" onclick="showPage('billing')" data-page="billing">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                        Billing
+                    </button>
                     <button class="nav-item" onclick="showPage('settings')" data-page="settings">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
                         Settings
@@ -505,6 +509,46 @@
                         <button class="btn btn-danger" onclick="showIncidentModal()">+ Log Incident</button>
                     </div>
                     <div id="incidentsList"></div>
+                </div>
+
+                <!-- Billing -->
+                <div id="page-billing" class="page" style="display:none;">
+                    <div class="page-header">
+                        <div>
+                            <h1>Billing</h1>
+                            <p>Invoices, tuition, and payments</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="showInvoiceModal()">+ New Invoice</button>
+                    </div>
+                    <div class="stats-grid" id="billingStats"></div>
+                    <div class="toolbar">
+                        <select id="billingStatusFilter" class="form-input" onchange="renderInvoices()" style="max-width:200px;">
+                            <option value="">All Statuses</option>
+                            <option value="draft">Draft</option>
+                            <option value="sent">Sent</option>
+                            <option value="partial">Partial</option>
+                            <option value="paid">Paid</option>
+                            <option value="overdue">Overdue</option>
+                            <option value="void">Void</option>
+                        </select>
+                    </div>
+                    <div class="card">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th>For</th>
+                                    <th>Amount</th>
+                                    <th>Paid</th>
+                                    <th>Balance</th>
+                                    <th>Due</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invoicesTable"></tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <!-- Settings -->
@@ -796,6 +840,90 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="invoiceModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="invoiceModalTitle">New Invoice</h2>
+                <button class="modal-close" onclick="closeModal('invoiceModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="invoiceModalMessage"></div>
+                <input type="hidden" id="invoiceId">
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" id="invoiceDescription" class="form-input" placeholder="e.g. May tuition" required>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="form-group">
+                        <label>Amount ($)</label>
+                        <input type="number" step="0.01" min="0" id="invoiceAmount" class="form-input" placeholder="0.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Due Date</label>
+                        <input type="date" id="invoiceDueDate" class="form-input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Child (optional)</label>
+                    <select id="invoiceChild" class="form-input"><option value="">— None —</option></select>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="invoiceStatus" class="form-input">
+                        <option value="draft">Draft</option>
+                        <option value="sent">Sent</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="invoiceNotes" class="form-input" rows="2" placeholder="Additional notes..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('invoiceModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveInvoice()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="paymentModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Record Payment</h2>
+                <button class="modal-close" onclick="closeModal('paymentModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="paymentModalMessage"></div>
+                <input type="hidden" id="paymentInvoiceId">
+                <p id="paymentInvoiceInfo" style="color:var(--gray-500);font-size:14px;margin-bottom:12px;"></p>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="form-group">
+                        <label>Amount ($)</label>
+                        <input type="number" step="0.01" min="0" id="paymentAmount" class="form-input" placeholder="0.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Method</label>
+                        <select id="paymentMethod" class="form-input">
+                            <option value="cash">Cash</option>
+                            <option value="check">Check</option>
+                            <option value="card">Card</option>
+                            <option value="transfer">Transfer</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Reference (optional)</label>
+                    <input type="text" id="paymentReference" class="form-input" placeholder="e.g. check #1024">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('paymentModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="recordPayment()">Record Payment</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="quickSignInModal">
         <div class="modal" style="max-width:700px;">
             <div class="modal-header">
@@ -821,8 +949,9 @@
         let allClasses = [];
         let todayAttendance = [];
 
+        const API_BASE = '/api/v1';
         function api(url, opts = {}) {
-            return fetch('/api/v1' + url, { ...opts, headers: { ...opts.headers, 'Authorization': 'Bearer ' + token, 'Content-Type': opts.body ? 'application/json' : undefined } });
+            return fetch(API_BASE + url, { ...opts, headers: { ...opts.headers, 'Authorization': 'Bearer ' + token, 'Content-Type': opts.body ? 'application/json' : undefined } });
         }
 
         function showAuthTab(tab) {
@@ -836,7 +965,7 @@
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             try {
-                const res = await fetch('/api/v1/auth/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'username=' + encodeURIComponent(email) + '&password=' + encodeURIComponent(password) });
+                const res = await fetch(API_BASE + '/auth/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'username=' + encodeURIComponent(email) + '&password=' + encodeURIComponent(password) });
                 if (res.ok) {
                     const data = await res.json();
                     token = data.access_token;
@@ -861,7 +990,7 @@
             const role = document.getElementById('regRole').value;
             if (!username || !email || !password) { showMessage('authMessage', 'Please fill in all fields', 'error'); return; }
             try {
-                const res = await fetch('/api/v1/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, username, password, role }) });
+                const res = await fetch(API_BASE + '/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, username, password, role }) });
                 if (res.ok) { showMessage('authMessage', 'Account created! Sign in now.', 'success'); showAuthTab('login'); }
                 else { const d = await res.json(); showMessage('authMessage', extractError(d), 'error'); }
             } catch (err) { showMessage('authMessage', 'Registration failed. Is the server running?', 'error'); }
@@ -876,7 +1005,7 @@
 
         async function initApp() {
             try {
-                const res = await api('/me');
+                const res = await api('/auth/me');
                 if (!res.ok) { logout(); return; }
                 currentUser = await res.json();
                 document.getElementById('userName').textContent = currentUser.username;
@@ -940,6 +1069,7 @@
             else if (page === 'classes') loadClasses();
             else if (page === 'reports') loadReports();
             else if (page === 'incidents') loadIncidents();
+            else if (page === 'billing') loadBilling();
             else if (page === 'settings') loadSettings();
             if (window.innerWidth < 768) toggleSidebar();
         }
@@ -1330,6 +1460,123 @@
             if (!confirm('Delete this class?')) return;
             await api('/classes/' + id, { method: 'DELETE' });
             loadClasses();
+        }
+
+        // Billing
+        let allInvoices = [];
+
+        function fmtMoney(dollars) { return '$' + Number(dollars || 0).toFixed(2); }
+
+        function invoiceStatusBadge(status) {
+            const map = { paid: 'badge-success', overdue: 'badge-danger', partial: 'badge-primary', sent: 'badge-primary' };
+            const cls = map[status] || 'badge';
+            const label = status.charAt(0).toUpperCase() + status.slice(1);
+            return '<span class="badge ' + cls + '">' + label + '</span>';
+        }
+
+        async function loadBilling() {
+            try {
+                const [sumRes, invRes, chRes] = await Promise.all([
+                    api('/billing/summary'), api('/billing/invoices'), api('/children')
+                ]);
+                const summary = await sumRes.json();
+                allInvoices = await invRes.json();
+                allChildren = await chRes.json();
+                document.getElementById('billingStats').innerHTML =
+                    '<div class="stat-card"><div class="stat-label">Outstanding</div><div class="stat-value danger">' + fmtMoney(summary.outstanding) + '</div></div>' +
+                    '<div class="stat-card"><div class="stat-label">Collected This Month</div><div class="stat-value success">' + fmtMoney(summary.collected_this_month) + '</div></div>' +
+                    '<div class="stat-card"><div class="stat-label">Overdue</div><div class="stat-value ' + (summary.overdue_count > 0 ? 'danger' : '') + '">' + summary.overdue_count + '</div></div>' +
+                    '<div class="stat-card"><div class="stat-label">Total Invoiced</div><div class="stat-value">' + fmtMoney(summary.total_invoiced) + '</div></div>';
+                renderInvoices();
+            } catch (err) { console.error('Billing load failed', err); }
+        }
+
+        function renderInvoices() {
+            const tbody = document.getElementById('invoicesTable');
+            const filter = document.getElementById('billingStatusFilter').value;
+            let rows = allInvoices;
+            if (filter) rows = rows.filter(i => i.status === filter);
+            if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><h3>No invoices</h3><p>Create your first invoice to start tracking tuition</p></div></td></tr>'; return; }
+            tbody.innerHTML = rows.map(i => {
+                const child = allChildren.find(c => c.id === i.child_id);
+                const who = child ? escapeHtml(child.first_name + ' ' + child.last_name) : '<span style="color:var(--gray-400)">—</span>';
+                const due = i.due_date ? new Date(i.due_date).toLocaleDateString() : '<span style="color:var(--gray-400)">—</span>';
+                const canPay = (i.status !== 'paid' && i.status !== 'void');
+                const payBtn = canPay ? '<button class="btn btn-ghost btn-icon" title="Record payment" onclick="showPaymentModal(' + i.id + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></button>' : '';
+                return '<tr>' +
+                    '<td><strong>' + escapeHtml(i.description) + '</strong></td>' +
+                    '<td>' + who + '</td>' +
+                    '<td>' + fmtMoney(i.amount) + '</td>' +
+                    '<td>' + fmtMoney(i.amount_paid) + '</td>' +
+                    '<td><strong>' + fmtMoney(i.balance) + '</strong></td>' +
+                    '<td>' + due + '</td>' +
+                    '<td>' + invoiceStatusBadge(i.status) + '</td>' +
+                    '<td><div style="display:flex;gap:4px;">' + payBtn +
+                    '<button class="btn btn-danger btn-icon" title="Void" onclick="deleteInvoice(' + i.id + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>' +
+                    '</div></td></tr>';
+            }).join('');
+        }
+
+        function showInvoiceModal() {
+            document.getElementById('invoiceModalMessage').innerHTML = '';
+            ['invoiceDescription','invoiceAmount','invoiceDueDate','invoiceNotes'].forEach(el => document.getElementById(el).value = '');
+            document.getElementById('invoiceStatus').value = 'sent';
+            const sel = document.getElementById('invoiceChild');
+            sel.innerHTML = '<option value="">— None —</option>' + allChildren.map(c => '<option value="' + c.id + '">' + escapeHtml(c.first_name + ' ' + c.last_name) + '</option>').join('');
+            openModal('invoiceModal');
+        }
+
+        async function saveInvoice() {
+            const amount = parseFloat(document.getElementById('invoiceAmount').value);
+            if (!amount || amount <= 0) { showMessage('invoiceModalMessage', 'Enter a valid amount', 'error'); return; }
+            const data = {
+                description: document.getElementById('invoiceDescription').value,
+                amount: amount,
+                status: document.getElementById('invoiceStatus').value,
+                notes: document.getElementById('invoiceNotes').value || null
+            };
+            const childId = document.getElementById('invoiceChild').value;
+            if (childId) data.child_id = parseInt(childId);
+            const due = document.getElementById('invoiceDueDate').value;
+            if (due) data.due_date = due;
+            try {
+                const res = await api('/billing/invoices', { method: 'POST', body: JSON.stringify(data) });
+                if (res.ok) { closeModal('invoiceModal'); loadBilling(); }
+                else { const d = await res.json(); showMessage('invoiceModalMessage', (d.detail && d.detail[0] ? d.detail[0].msg : d.detail) || 'Failed', 'error'); }
+            } catch (err) { showMessage('invoiceModalMessage', 'Failed to save invoice', 'error'); }
+        }
+
+        function showPaymentModal(invoiceId) {
+            const inv = allInvoices.find(i => i.id === invoiceId);
+            document.getElementById('paymentModalMessage').innerHTML = '';
+            document.getElementById('paymentInvoiceId').value = invoiceId;
+            document.getElementById('paymentAmount').value = inv ? inv.balance : '';
+            document.getElementById('paymentReference').value = '';
+            document.getElementById('paymentMethod').value = 'cash';
+            document.getElementById('paymentInvoiceInfo').textContent = inv ? (inv.description + ' — balance ' + fmtMoney(inv.balance)) : '';
+            openModal('paymentModal');
+        }
+
+        async function recordPayment() {
+            const id = document.getElementById('paymentInvoiceId').value;
+            const amount = parseFloat(document.getElementById('paymentAmount').value);
+            if (!amount || amount <= 0) { showMessage('paymentModalMessage', 'Enter a valid amount', 'error'); return; }
+            const data = {
+                amount: amount,
+                method: document.getElementById('paymentMethod').value,
+                reference: document.getElementById('paymentReference').value || null
+            };
+            try {
+                const res = await api('/billing/invoices/' + id + '/payments', { method: 'POST', body: JSON.stringify(data) });
+                if (res.ok) { closeModal('paymentModal'); loadBilling(); }
+                else { const d = await res.json(); showMessage('paymentModalMessage', (d.detail && d.detail[0] ? d.detail[0].msg : d.detail) || 'Failed', 'error'); }
+            } catch (err) { showMessage('paymentModalMessage', 'Failed to record payment', 'error'); }
+        }
+
+        async function deleteInvoice(id) {
+            if (!confirm('Void this invoice? This cannot be undone.')) return;
+            await api('/billing/invoices/' + id, { method: 'DELETE' });
+            loadBilling();
         }
 
         // Daily Reports

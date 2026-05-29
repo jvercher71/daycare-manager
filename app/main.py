@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import init_db
 from app.config import settings
 from app.middleware.rate_limiter import rate_limit_middleware
-from app.routers import auth, daycares, parents, children, classes, attendance, daily_reports, incidents, dashboard
+from app.routers import auth, daycares, parents, children, classes, attendance, daily_reports, incidents, dashboard, billing
 
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL),
@@ -74,6 +74,7 @@ app.include_router(attendance.router, prefix="/api/v1")
 app.include_router(daily_reports.router, prefix="/api/v1")
 app.include_router(incidents.router, prefix="/api/v1")
 app.include_router(dashboard.router, prefix="/api/v1")
+app.include_router(billing.router, prefix="/api/v1")
 
 static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
 if os.path.isdir(static_dir):

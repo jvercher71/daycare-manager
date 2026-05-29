@@ -15,6 +15,23 @@ class ChildStatus(str, enum.Enum):
     INACTIVE = "inactive"
 
 
+class InvoiceStatus(str, enum.Enum):
+    DRAFT = "draft"
+    SENT = "sent"
+    PARTIAL = "partial"
+    PAID = "paid"
+    OVERDUE = "overdue"
+    VOID = "void"
+
+
+class PaymentMethod(str, enum.Enum):
+    CASH = "cash"
+    CHECK = "check"
+    CARD = "card"
+    TRANSFER = "transfer"
+    OTHER = "other"
+
+
 parent_child = Table(
     'parent_child',
     Base.metadata,
@@ -173,3 +190,46 @@ class Incident(Base):
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     child = relationship("Child", back_populates="incidents")
+
+
+class Invoice(Base):
+    __tablename__ = "invoices"
+
+    id = Column(Integer, primary_key=True, index=True)
+    daycare_id = Column(Integer, ForeignKey("daycares.id"), nullable=False, index=True)
+    child_id = Column(Integer, ForeignKey("children.id"), nullable=True)
+    parent_id = Column(Integer, ForeignKey("parents.id"), nullable=True)
+    description = Column(String, nullable=False)
+    # Money is stored as an integer number of cents to avoid floating-point errors.
+    amount_cents = Column(Integer, nullable=False)
+    issue_date = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    due_date = Column(DateTime, nullable=True)
+    status = Column(String, default=InvoiceStatus.DRAFT.value)
+    notes = Column(Text, nullable=True)
+    is_deleted = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    child = relationship("Child")
+    parent = relationship("Parent")
+    payments = relationship("Payment", back_populates="invoice", cascade="all, delete-orphan")
+
+
+class Payment(Base):
+    __tablename__ = "payments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    invoice_id = Column(Integer, ForeignKey("invoices.id"), nullable=False, index=True)
+    amount_cents = Column(Integer, nullable=False)
+    method = Column(String, default=PaymentMethod.CASH.value)
+    reference = Column(String, nullable=True)  # e.g. check number, confirmation code
+    # Reserved for a future payment processor (e.g. Stripe). Null = recorded manually.
+    processor = Column(String, nullable=True)
+    processor_txn_id = Column(String, nullable=True)
+    payment_date = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    notes = Column(Text, nullable=True)
+    recorded_by = Column(String, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    invoice = relationship("Invoice", back_populates="payments")

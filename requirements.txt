@@ -1,3 +1,4 @@
+# cache-bust 2026-05-29: force fresh dependency install on Vercel
 fastapi>=0.115.0
 uvicorn[standard]>=0.30.0
 sqlalchemy>=2.0.36

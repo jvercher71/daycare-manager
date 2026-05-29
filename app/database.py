@@ -32,6 +32,16 @@ def _normalize_db_url(url: str) -> str:
 
 database_url = _normalize_db_url(settings.DATABASE_URL)
 
+if not (database_url.startswith("sqlite") or database_url.startswith("postgresql")):
+    _scheme = settings.DATABASE_URL.split("://", 1)[0]
+    raise RuntimeError(
+        f"Unsupported DATABASE_URL scheme {_scheme!r}. Expected a "
+        f"'postgresql://' connection string (e.g. the Supabase transaction "
+        f"pooler: postgresql://postgres.<ref>:<password>@...pooler.supabase.com:6543/postgres) "
+        f"or 'sqlite:///'. If you pasted the Supabase project URL "
+        f"(https://<ref>.supabase.co), use the database connection string instead."
+    )
+
 if database_url.startswith("sqlite"):
     engine = create_async_engine(database_url, connect_args={"check_same_thread": False})
 else:

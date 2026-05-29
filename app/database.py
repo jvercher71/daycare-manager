@@ -39,13 +39,12 @@ else:
     # Supabase's transaction pooler (PgBouncer): asyncpg's prepared-statement
     # cache is incompatible with transaction pooling, and the external pooler
     # owns connection pooling — so use NullPool and disable statement caching.
+    # statement_cache_size=0 disables asyncpg's prepared-statement cache, which
+    # is the documented fix for running asyncpg behind PgBouncer transaction mode.
     engine = create_async_engine(
         database_url,
         poolclass=NullPool,
-        connect_args={
-            "statement_cache_size": 0,
-            "prepared_statement_cache_size": 0,
-        },
+        connect_args={"statement_cache_size": 0},
     )
 
 AsyncSessionLocal = async_sessionmaker(
